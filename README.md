@@ -101,9 +101,9 @@ Click any line to jump to it. The **Read-ahead** slider lights each line up a mo
 
 ## Putting it on your own website
 
-- **Link to it:** turn on GitHub Pages for this repo (Settings → Pages → Deploy from branch → `main` / root) and link to `https://<username>.github.io/phrasecue/`.
+- **Link to it:** turn on GitHub Pages for this repo (Settings → Pages → Deploy from branch → `main` / root) and link to `https://greenguy27.github.io/phrasecue/` (already live for this repo).
 - **Self-host:** upload `index.html` to any web host. It's fully self-contained.
-- **Embed:** `<iframe src="https://<username>.github.io/phrasecue/" style="width:100%;height:85vh;border:0" allow="fullscreen"></iframe>`. Some site builders limit iframes, so a link or button is the most reliable option.
+- **Embed:** `<iframe src="https://greenguy27.github.io/phrasecue/" style="width:100%;height:85vh;border:0" allow="fullscreen"></iframe>`. Some site builders limit iframes, so a link or button is the most reliable option.
 
 ## Privacy
 
