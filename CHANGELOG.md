@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.2.0 (in testing)
+- **🎬 Video export:** lyric or karaoke videos, landscape / vertical / square; whole song or current loop; background image, title card, credit line, optional clean (no phrasing marks) style; MP4 (H.264) when supported, otherwise WebM
+
 ## 1.1.0 (2026-10-21)
 - **Practice:** loop a line (`L`), a section (`Shift+L`) or an A–B range; speed 50–110% with pitch preserved (`,` `.`)
 - **Timeline:** vocal envelope, line markers and section labels; click to seek, drag markers to retime, scroll to zoom
