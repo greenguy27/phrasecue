@@ -18,6 +18,10 @@ Load your song's full mix, its instrumental and your lyrics. Tap once through th
 - **Switch tracks mid-song.** Flip between the full mix and the instrumental mid-song without stopping, so you can listen to a phrase and then sing it.
 - **Simple timing.** Tap **Space** at the start of each line. Mistakes are easy to undo or nudge.
 - **Portable.** Timing saves as a small `.timing.json` file, or exports as a standard `.lrc` that other karaoke apps can read.
+- **Practice tools.** Loop a line, a section or your own A–B range, and slow down to 50% without changing pitch.
+- **Timeline.** See the vocal and every line's start under the lyrics. Drag a marker to retime a line, scroll to zoom.
+- **Snap (auto-timing assist).** With both mixes loaded, PhraseCue isolates the lead vocal (full mix minus instrumental) and nudges your taps onto the real vocal starts.
+- **Record yourself.** Sing over the instrumental, play the take back in sync, and download your voice or a voice-plus-instrumental WAV.
 
 ## Quick start
 
@@ -26,9 +30,9 @@ Load your song's full mix, its instrumental and your lyrics. Tap once through th
    - the **full mix** audio (MP3, WAV, M4A, OGG, FLAC)
    - the **instrumental**. Its file name must contain *without*, *instrumental*, *karaoke*, *backing*, *minus* or *no vocal*, so PhraseCue can tell it apart.
    - one or more **lyrics** files (`.txt`, `.md` or `.lrc`)
-3. **Time it, once per lyrics file:** press **S**, then **Space** to start the song, then tap **Space** the moment the singer starts each **blue** line.
+3. **Time it, once per lyrics file:** press **S**, then **Space** to start the song, then tap **Space** the moment the singer starts each **blue** line. With both mixes loaded, **🧲 Snap** tightens your taps automatically.
 4. **Sing:** press **S** to leave timing mode, **V** for the instrumental, then **Space** to play.
-5. **Keep it:** click **💾 Save timing** and keep the `.timing.json` file next to your song. Next time, or on another computer, drag it in with the other files.
+5. **Keep it:** use **Timing ▾ → 💾 Save timing file** and keep the `.timing.json` file next to your song. Next time, or on another computer, drag it in with the other files.
 
 Want to see the lyric formats? Load the files in [`examples/`](examples/) along with any audio file.
 
@@ -73,6 +77,16 @@ The first line is the title. Lines in `( )` or `[ ]` are section headers, and ev
 ### LRC
 Standard `[mm:ss.xx] lyric` files load already timed.
 
+## Practice tools
+
+- **Loop:** `L` loops the current line, `Shift`+`L` loops the current section, and `A` / `B` set your own start and end. Press `L` again or click the gold loop button to stop.
+- **Speed:** the *Speed* menu (or `,` and `.`) plays at 50–110%. Pitch stays the same.
+- **Timeline:** the strip above the controls. Gold markers are your lines and blue ticks are detected vocal starts. Click to jump, drag a marker to retime it (hold `Shift` to skip snapping), scroll to zoom, drag to pan, and double-click to zoom back out.
+- **Snap:** turned on automatically when both mixes are loaded. Taps land on the nearest strong vocal start. It isn't perfect: if a stamp looks wrong, drag its marker or turn Snap off. It doesn't time the whole song by itself, because word onsets inside a line look just like line starts.
+- **Record:** press `R` to start and stop. Recording starts from where you are, or from the loop start, and stops at the loop end. **Wear headphones.** Open **🎙 Takes** (`T`) to play takes back, adjust *Voice timing* if you sound early or late, and download **Voice** (webm/m4a) or **Mix** (WAV, takes recorded at 100% speed). Takes aren't saved after you close the tab.
+  - The browser asks for microphone access the first time. Recording works from the hosted link in every browser. Opening the file directly works in Chrome and Edge, but Safari may refuse.
+  - Chrome asks once to *allow multiple downloads* the second time you download from the page. Click Allow.
+
 ## Keyboard shortcuts
 
 | Key | Action |
@@ -89,6 +103,11 @@ Standard `[mm:ss.xx] lyric` files load already timed.
 | `+` `−` | Text size |
 | `F` | Full screen |
 | `Home` (Mac: `Fn`+`←`) | Back to the start |
+| `L` / `Shift`+`L` | Loop current line / section (again = stop) |
+| `A` `B` | Set loop start / end |
+| `,` `.` | Slower / faster |
+| `R` | Record / stop |
+| `T` | Show takes |
 | `?` | Help |
 
 Click any line to jump to it. The **Read-ahead** slider lights each line up a moment early so you can see what's coming.
@@ -96,7 +115,7 @@ Click any line to jump to it. The **Read-ahead** slider lights each line up a mo
 ## Tips
 
 - **Lines feel late?** Raise *Read-ahead*, or press `Shift`+`[` a few times.
-- **Off by a whole line?** You probably tapped at the *end* of each line. Click **🗑 Clear timing** and tap at the *start* of each blue line.
+- **Off by a whole line?** You probably tapped at the *end* of each line. Use **Timing ▾ → 🗑 Clear timing** and tap at the *start* of each blue line. The timeline makes this easy to spot: gold markers should sit at the left edge of each vocal phrase.
 - Timings are tied to the lyrics file's name and line count. Fixing a typo is fine, but adding or removing a line means retiming from that point. In timing mode, click the line and keep tapping.
 
 ## Putting it on your own website
@@ -107,7 +126,7 @@ Click any line to jump to it. The **Read-ahead** slider lights each line up a mo
 
 ## Privacy
 
-PhraseCue makes no network requests. Files you load are read locally by your browser. Timings are stored in your browser's local storage and in any files you choose to download. Clearing your browser data erases the browser copy, so keep your `.timing.json` files.
+PhraseCue makes no network requests. Files you load and anything you record are processed locally by your browser. Timings are stored in your browser's local storage and in any files you choose to download. Clearing your browser data erases the browser copy, so keep your `.timing.json` files.
 
 ## License
 
