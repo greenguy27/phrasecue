@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.2.0 (in testing)
+## 1.2.0 (2026-10-21)
 - **🎬 Video export:** lyric or karaoke videos, landscape / vertical / square; whole song or current loop; background image, title card, credit line, optional clean (no phrasing marks) style; MP4 (H.264) when supported, otherwise WebM
 
 ## 1.1.0 (2026-10-21)
