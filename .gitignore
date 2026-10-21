@@ -1,0 +1,14 @@
+# Keep your own songs and timing files out of the public repo
+*.mp3
+*.wav
+*.m4a
+*.flac
+*.ogg
+*.aac
+*.timing.json
+*.timing (*).json
+
+# OS clutter
+.DS_Store
+Thumbs.db
+desktop.ini
