@@ -77,6 +77,14 @@ The first line is the title. Lines in `( )` or `[ ]` are section headers, and ev
 ### LRC
 Standard `[mm:ss.xx] lyric` files load already timed.
 
+## Instrumental breaks
+
+During an instrumental break, the last line dims and a **♪ Instrumental** bar counts down to the next line.
+- **Estimated breaks:** when the gap before the next line is much longer than your usual line length, PhraseCue treats the rest of it as a break, marked *estimated*. You can turn this off with **Timing ▾ → ♪ Estimate breaks**.
+- **Exact breaks:** while timing, press `Enter` the moment the singing stops, then keep tapping `Space` when it comes back. `Backspace` undoes the mark, `Shift`+`Enter` removes it, and on the timeline you can drag the blue break marker.
+- A section in your phrasing file with no lyric lines, like `## [SHORT INSTRUMENTAL]`, gives the break its name.
+- Breaks are saved in the timing file, and exported to `.lrc` as an empty timestamp, which is the standard way to show "no lyrics here".
+
 ## Practice tools
 
 - **Loop:** `L` loops the current line, `Shift`+`L` loops the current section, and `A` / `B` set your own start and end. Press `L` again or click the gold loop button to stop.
@@ -99,7 +107,8 @@ Standard `[mm:ss.xx] lyric` files load already timed.
 | `↑` `↓` | Previous / next line |
 | `[` `]` | Move the current line 0.1 s earlier / later |
 | `Shift` + `[` `]` | Move **all** lines 0.1 s earlier / later |
-| `Backspace` | Timing mode: undo the last stamp |
+| `Backspace` | Timing mode: undo the last stamp (or break mark) |
+| `Enter` / `Shift`+`Enter` | Mark / remove an instrumental break after the current line |
 | `+` `−` | Text size |
 | `F` | Full screen |
 | `Home` (Mac: `Fn`+`←`) | Back to the start |

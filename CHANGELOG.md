@@ -5,6 +5,7 @@
 - **Timeline:** vocal envelope, line markers and section labels; click to seek, drag markers to retime, scroll to zoom
 - **Snap:** isolates the lead vocal (full mix − instrumental), detects phrase starts and snaps taps/drags to them
 - **Record yourself:** mic recording over the instrumental, takes list, synced playback, voice-timing offset, voice or WAV-mix download
+- **Instrumental breaks:** "♪ Instrumental" banner with countdown bar; estimated from long gaps, or marked exactly with `Enter` while timing (draggable on the timeline, saved in timing files and LRC)
 - Timing actions moved into a **Timing ▾** menu; help and README updated
 
 ## 1.0.0 (2026-10-21)

@@ -58,6 +58,9 @@ header,footer{flex:0 0 auto}
 .line .ts{font-size:12px;color:var(--dim);position:absolute;left:-5.2vw;top:50%;transform:translateY(-50%);font-variant-numeric:tabular-nums;font-family:ui-monospace,Menlo,Consolas,monospace}
 .sync-on .line .ts{color:var(--target)}
 .hide-ts .line .ts{display:none}
+.brk{display:none;font-size:calc(var(--fs)*.5);color:var(--target);margin:.35em 0 .55em;padding:.35em .6em;border-left:3px solid var(--target);background:rgba(127,184,255,.07);border-radius:6px}
+.brk small{color:var(--mid);font-size:.62em;margin-left:.6em}
+.brk .bar{height:4px;background:var(--target);border-radius:2px;margin-top:.4em;transform-origin:left center}
 .countdown{position:fixed;right:5vw;top:18vh;font-size:72px;font-weight:800;color:var(--accent);opacity:0;transition:opacity .2s;pointer-events:none;font-variant-numeric:tabular-nums}
 .countdown.show{opacity:.95}
 .syncbar{background:var(--target);color:#06121f;padding:7px 16px;font-weight:600;display:none;text-align:center;font-size:14px}
@@ -129,6 +132,7 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
         <button id="btnSave" title="Download .timing.json">💾 Save timing file</button>
         <button id="btnLrc" title="Export .lrc">📄 Export LRC</button>
         <button id="btnClear" title="Erase all timing for this lyrics file">🗑 Clear timing</button>
+        <button id="btnAutoBrk" title="Show long gaps between lines as instrumental breaks, even where you haven't marked one with Enter"></button>
       </div>
     </details>
     <button id="btnFsDown" title="-">A−</button>
@@ -138,7 +142,7 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
     <button id="btnAbout" title="About PhraseCue">About</button>
   </header>
 
-  <div class="syncbar" id="syncbar">SYNC: tap <kbd>Space</kbd> the moment the singer <u>starts</u> the BLUE line (first tap just starts the song) · <kbd>Backspace</kbd> undo · click a line to redo from there</div>
+  <div class="syncbar" id="syncbar">SYNC: tap <kbd>Space</kbd> the moment the singer <u>starts</u> the BLUE line (first tap just starts the song) · <kbd>Enter</kbd> when the singing stops for an instrumental · <kbd>Backspace</kbd> undo · click a line to redo from there</div>
   <div class="stage" id="stage"><div id="lyrics"></div></div>
   <div class="countdown" id="countdown"></div>
 
@@ -213,7 +217,8 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
     <tr><td><kbd>↑</kbd> <kbd>↓</kbd></td><td>Previous / next line (jumps to its time, or steps manually if untimed)</td></tr>
     <tr><td><kbd>[</kbd> <kbd>]</kbd></td><td>Nudge the current line 0.1 s earlier/later</td></tr>
     <tr><td><kbd>Shift</kbd>+<kbd>[</kbd> <kbd>]</kbd></td><td>Nudge <i>all</i> lines 0.1 s earlier/later</td></tr>
-    <tr><td><kbd>Backspace</kbd></td><td>Sync mode: undo the last stamp</td></tr>
+    <tr><td><kbd>Backspace</kbd></td><td>Sync mode: undo the last stamp (or break mark)</td></tr>
+    <tr><td><kbd>Enter</kbd></td><td>Mark an instrumental break: the singing stops here, after the last line. <kbd>Shift</kbd>+<kbd>Enter</kbd> removes it</td></tr>
     <tr><td><kbd>+</kbd> <kbd>−</kbd></td><td>Text size</td></tr>
     <tr><td><kbd>F</kbd></td><td>Full screen</td></tr>
     <tr><td><kbd>Home</kbd></td><td>Back to start</td></tr>
@@ -269,6 +274,8 @@ let rate = 1;                                    // practice speed
 let loopR = {on:false, a:0, b:0, label:""};      // active loop
 let markA = null, markB = null;
 let snapOn = store.get("phrasecue:snap", true);
+let autoBrk = store.get("phrasecue:autobrk", true);   // estimate instrumental breaks from the timing
+let lastSyncAction = null;
 let micLatency = store.get("phrasecue:lat", 0.12);
 let ana = {state:"none", env:null, onsets:[], norm:1};   // vocal analysis (full mix − instrumental)
 
@@ -349,9 +356,16 @@ function addLyrics(name, txt){
     if(it.type==="section"){ secs.push({name:plainText(it.html), first:null, last:null}); sec=secs.length-1; it.sec=sec; }
     if(it.type==="line"){ it.idx=lines.length; it.sec=sec; lines.push(it); if(sec>=0){ if(secs[sec].first==null) secs[sec].first=it.idx; secs[sec].last=it.idx; } }
   });
-  lyrics[name]={items, lines, secs, times:new Array(lines.length).fill(null)};
+  // a section with no lyric lines (e.g. "[SHORT INSTRUMENTAL]") names the break after the line before it
+  let lastLine=-1;
+  items.forEach(it=>{ if(it.type==="line") lastLine=it.idx; else if(it.type==="section" && secs[it.sec].first==null && lastLine>=0){ const nm=plainText(it.html).toLowerCase(); lines[lastLine].brkName=nm.charAt(0).toUpperCase()+nm.slice(1); } });
+  lyrics[name]={items, lines, secs, times:new Array(lines.length).fill(null), ends:new Array(lines.length).fill(null)};
   const saved=store.get(timingKey(name), null);
-  if(saved && saved.length===lines.length) lyrics[name].times=saved;
+  const sv = Array.isArray(saved) ? {times:saved} : saved;
+  if(sv && Array.isArray(sv.times) && sv.times.length===lines.length){
+    lyrics[name].times=sv.times;
+    if(Array.isArray(sv.ends) && sv.ends.length===lines.length) lyrics[name].ends=sv.ends;
+  }
   else if(lrcTimes) lyrics[name].times=lrcTimes;
 }
 
@@ -361,11 +375,13 @@ function applyTimingFile(obj){
   if(!target) target = Object.keys(lyrics).find(n => lyrics[n].lines.length===obj.times.length) || null;
   if(!target || lyrics[target].lines.length!==obj.times.length){
     // remember for later in case lyrics are loaded afterwards
-    if(obj.lyrics) store.set("phrasecue:t:"+obj.lyrics+":"+obj.times.length, obj.times);
+    if(obj.lyrics) store.set("phrasecue:t:"+obj.lyrics+":"+obj.times.length, {times:obj.times, ends:obj.ends||null});
     return false;
   }
-  lyrics[target].times=obj.times.slice();
-  store.set(timingKey(target), lyrics[target].times);
+  const LT=lyrics[target];
+  LT.times=obj.times.slice();
+  LT.ends = Array.isArray(obj.ends) && obj.ends.length===LT.lines.length ? obj.ends.slice() : new Array(LT.lines.length).fill(null);
+  store.set(timingKey(target), {times:LT.times, ends:LT.ends});
   if(typeof obj.lead==="number"){ lead=obj.lead; store.set("phrasecue:lead",lead); syncLeadUI(); }
   return target;
 }
@@ -430,6 +446,7 @@ function render(){
     frag.appendChild(d);
   }
   st.appendChild(frag);
+  const be=document.createElement("div"); be.className="brk"; be.id="brk"; st.appendChild(be);
   updateTsLabels();
   $("stage").scrollTop=0;
 }
@@ -456,6 +473,23 @@ function currentIndex(t){
 }
 function nextTimed(i){ const T=lyrics[curName].times; for(let j=i+1;j<T.length;j++) if(T[j]!=null) return j; return -1; }
 
+function medianLineLen(L){
+  const g=[]; for(let i=0;i<L.times.length-1;i++){ const a=L.times[i], b=L.times[i+1]; if(a!=null && b!=null && b>a) g.push(b-a); }
+  if(g.length<3) return 0; g.sort((x,y)=>x-y); return g[Math.floor(g.length/2)];
+}
+// the instrumental break after line i, if any: {start, end, manual, last}
+function breakAfter(i, med){
+  const L=lyrics[curName]; if(!L || i<0 || L.times[i]==null) return null;
+  const n=nextTimed(i), nextT = n>=0 ? L.times[n] : dur(); if(!nextT) return null;
+  const e=L.ends[i];
+  if(e!=null && e>L.times[i] && e<nextT) return {start:e, end:nextT, manual:true, last:n<0};
+  if(!autoBrk) return null;
+  if(med===undefined) med=medianLineLen(L); if(!med) return null;
+  const gap=nextT-L.times[i];
+  if(gap > Math.max(7, 2.5*med)) return {start:L.times[i]+Math.min(1.6*med, gap-3), end:nextT, manual:false, last:n<0};
+  return null;
+}
+function breakName(i, b){ const L=lyrics[curName]; return L.lines[i].brkName || (b.last ? "Outro" : "Instrumental"); }
 function scrollToEl(el){
   const st=$("stage");
   const top=el.offsetTop - st.clientHeight*0.36;
@@ -467,7 +501,11 @@ function paint(){
   const L=lyrics[curName];
   const t=now() + (mode==="sing"?lead:0);
   const cur = mode==="sync" ? syncIdx-1 : currentIndex(t);
-  if(cur!==lastCur){
+  let brk=null;
+  if(mode==="sing" && cur>=0){ const b=breakAfter(cur); if(b && t>=b.start && t<b.end) brk=b; }
+  const state = brk ? cur+0.5 : cur;
+  const be=$("brk");
+  if(state!==lastCur){
     L.lines.forEach((ln,i)=>{
       if(mode==="sync"){
         // in sync mode the line you're WAITING for is the bright one, so you tap at its start
@@ -477,17 +515,28 @@ function paint(){
         ln.el.classList.toggle("past", i<syncIdx-1);
       } else {
         ln.el.classList.remove("target","justdone");
-        ln.el.classList.toggle("cur", i===cur);
-        ln.el.classList.toggle("past", i<cur);
+        ln.el.classList.toggle("cur", i===cur && !brk);
+        ln.el.classList.toggle("past", i<cur || (brk && i===cur));
         ln.el.classList.toggle("next", i===cur+1);
       }
     });
+    if(be){
+      if(brk){ L.lines[cur].el.after(be); be.style.display="block"; }
+      else be.style.display="none";
+    }
     const focus = mode==="sync" ? L.lines[Math.min(syncIdx,L.lines.length-1)] : (L.lines[cur] || L.lines[0]);
-    if(focus && !(cur===-1 && mode==="sing" && now()<0.05)) scrollToEl(focus.el);
-    lastCur=cur;
+    if(brk && be) scrollToEl(be);
+    else if(focus && !(cur===-1 && mode==="sing" && now()<0.05)) scrollToEl(focus.el);
+    lastCur=state;
+  }
+  if(brk && be){
+    const left=Math.max(0,brk.end-t), p=Math.min(1,Math.max(0,(t-brk.start)/(brk.end-brk.start)));
+    const label="♪ "+breakName(cur,brk);
+    const sub = brk.last ? "end of lyrics" : "next line in "+(left>=60?fmtShort(left):Math.ceil(left)+"s");
+    be.innerHTML=esc(label)+"<small>"+sub+(brk.manual?"":" · estimated")+"</small><div class=\"bar\" style=\"transform:scaleX("+(1-p).toFixed(3)+")\"></div>";
   }
   // progress bar within the current line
-  if(cur>=0 && mode==="sing"){
+  if(cur>=0 && mode==="sing" && !brk){
     const n=nextTimed(cur), a=L.times[cur], b=n>=0?L.times[n]:dur();
     const p = (a!=null && b>a) ? Math.min(1,Math.max(0,(t-a)/(b-a))) : 0;
     L.lines[cur].el.style.setProperty("--p",p);
@@ -591,21 +640,40 @@ function stamp(){
   const sn=snapTime(t);
   const prevT = syncIdx>0 ? L.times[syncIdx-1] : null;
   if(sn!=null && (prevT==null || sn>prevT+0.2)) t=sn;
-  L.times[syncIdx]=t;
+  L.times[syncIdx]=t; L.ends[syncIdx]=null;
+  if(syncIdx>0 && L.ends[syncIdx-1]!=null && L.ends[syncIdx-1]>=t) L.ends[syncIdx-1]=null;
   // a re-sync from the middle invalidates later stamps that are now out of order
-  for(let j=syncIdx+1;j<L.times.length;j++) if(L.times[j]!=null && L.times[j]<=L.times[syncIdx]) L.times[j]=null;
+  for(let j=syncIdx+1;j<L.times.length;j++) if(L.times[j]!=null && L.times[j]<=L.times[syncIdx]){ L.times[j]=null; L.ends[j]=null; }
+  lastSyncAction="stamp";
   syncIdx++;
   saveLocal(); updateTsLabels(); updateTimedChip(); lastCur=-2;
   if(syncIdx>=L.lines.length) toast("Done! Press S to sing, 💾 to save the timing file");
 }
 function undoStamp(){
   const L=lyrics[curName]; if(!L || syncIdx===0) return;
-  syncIdx--; L.times[syncIdx]=null;
+  if(lastSyncAction==="break" && L.ends[syncIdx-1]!=null){
+    const e=L.ends[syncIdx-1]; L.ends[syncIdx-1]=null; lastSyncAction=null;
+    seek(Math.max(0,e-1.5)); saveLocal(); lastCur=-2; toast("Break mark removed"); return;
+  }
+  lastSyncAction=null;
+  syncIdx--; L.times[syncIdx]=null; L.ends[syncIdx]=null;
   const prev = syncIdx>0 ? L.times[syncIdx-1] : null;
   seek(Math.max(0,(prev!=null?prev:now()-4)-0.5));
   saveLocal(); updateTsLabels(); updateTimedChip(); lastCur=-2;
 }
-function saveLocal(){ if(curName) store.set(timingKey(curName), lyrics[curName].times); }
+function saveLocal(){ if(curName) store.set(timingKey(curName), {times:lyrics[curName].times, ends:lyrics[curName].ends}); }
+// Enter: the singing stops here (an instrumental break starts) after the last stamped / current line
+function markBreak(remove){
+  const L=lyrics[curName]; if(!L) return;
+  const i = mode==="sync" ? syncIdx-1 : currentIndex(now()+lead);
+  if(i<0 || L.times[i]==null){ toast("Stamp a line first"); return; }
+  if(remove){ if(L.ends[i]!=null){ L.ends[i]=null; saveLocal(); lastCur=-2; toast("Break mark after line "+(i+1)+" removed"); } return; }
+  const t=+now().toFixed(2), n=nextTimed(i);
+  if(t<=L.times[i]+0.3 || (n>=0 && mode!=="sync" && t>=L.times[n])){ toast("Mark the break after line "+(i+1)+" starts, before the next line"); return; }
+  L.ends[i]=t; if(mode==="sync") lastSyncAction="break";
+  saveLocal(); lastCur=-2;
+  toast("♪ Break after line "+(i+1)+" at "+fmt(t)+(mode==="sync"?" — tap Space when the singing comes back":""));
+}
 
 // ---------- line navigation / nudging ----------
 function gotoLine(i){
@@ -629,7 +697,7 @@ function stepLine(d){
 }
 function nudge(delta, all){
   const L=lyrics[curName]; if(!L) return;
-  if(all){ L.times=L.times.map(x=>x==null?null:Math.max(0,+(x+delta).toFixed(2))); toast(`All lines ${delta>0?"+":""}${delta.toFixed(1)}s`); }
+  if(all){ L.times=L.times.map(x=>x==null?null:Math.max(0,+(x+delta).toFixed(2))); L.ends=L.ends.map(x=>x==null?null:Math.max(0,+(x+delta).toFixed(2))); toast(`All lines ${delta>0?"+":""}${delta.toFixed(1)}s`); }
   else{
     const i = mode==="sync" ? syncIdx-1 : currentIndex(now()+lead);
     if(i<0 || L.times[i]==null) return;
@@ -650,7 +718,7 @@ const baseName = n => n.replace(/\.[^.]+$/,"");
 function saveTiming(){
   if(!curName) return;
   const L=lyrics[curName];
-  download(baseName(curName)+".timing.json", JSON.stringify({app:"phrasecue",version:1,lyrics:curName,lines:L.lines.length,lead,times:L.times},null,1),"application/json");
+  download(baseName(curName)+".timing.json", JSON.stringify({app:"phrasecue",version:2,lyrics:curName,lines:L.lines.length,lead,times:L.times,ends:L.ends},null,1),"application/json");
   toast("Saved — keep it next to the song files");
 }
 function exportLrc(){
@@ -659,7 +727,7 @@ function exportLrc(){
   const title=L.items.find(i=>i.type==="title");
   const lrcT=t=>{ const m=Math.floor(t/60), s=(t-m*60).toFixed(2).padStart(5,"0"); return `[${String(m).padStart(2,"0")}:${s}]`; };
   let out = title ? `[ti:${plainText(title.html)}]\n` : "";
-  L.lines.forEach((ln,i)=>{ if(L.times[i]!=null) out+=lrcT(L.times[i])+plainText(ln.html).replace(/\s+/g," ")+"\n"; });
+  L.lines.forEach((ln,i)=>{ if(L.times[i]!=null){ out+=lrcT(L.times[i])+plainText(ln.html).replace(/\s+/g," ")+"\n"; if(L.ends[i]!=null) out+=lrcT(L.ends[i])+"\n"; } });
   download(baseName(curName)+".lrc", out, "text/plain");
 }
 
@@ -845,6 +913,15 @@ function drawTL(){
   // line markers + section labels
   const L=lyrics[curName];
   if(L){
+    const med=medianLineLen(L);
+    g.font="11px system-ui,sans-serif";
+    L.lines.forEach((ln,i)=>{
+      const b=breakAfter(i,med); if(!b || b.end<va || b.start>vb) return;
+      const x1=t2x(b.start,w), x2=t2x(b.end,w);
+      g.fillStyle = b.manual ? "rgba(127,184,255,.13)" : "rgba(127,184,255,.07)"; g.fillRect(x1,0,x2-x1,h-14);
+      if(x2-x1>16){ g.fillStyle="rgba(127,184,255,.9)"; g.fillText("♪",x1+4,40); }
+      if(b.manual){ g.fillStyle="#7fb8ff"; g.fillRect(x1-1,0,2,h-14); g.fillRect(x1-3,h-20,6,6); }
+    });
     const cur = mode==="sync" ? syncIdx-1 : currentIndex(now()+lead);
     let lastLabelX=-1e9;
     L.lines.forEach((ln,i)=>{
@@ -866,30 +943,35 @@ function drawTL(){
   if(tl.view){ g.fillStyle="#5f6270"; g.font="10px system-ui,sans-serif"; g.fillText("zoomed · double-click to reset", w-150, 11); }
 }
 function hitMarker(x,w){
-  const L=lyrics[curName]; if(!L) return -1;
-  let best=-1, bd=7;
-  L.times.forEach((t,i)=>{ if(t==null) return; const dx=Math.abs(t2x(t,w)-x); if(dx<bd){ bd=dx; best=i; } });
+  const L=lyrics[curName]; if(!L) return null;
+  let best=null, bd=7;
+  L.times.forEach((t,i)=>{ if(t==null) return; const dx=Math.abs(t2x(t,w)-x); if(dx<bd){ bd=dx; best={kind:"start",i}; } });
+  L.ends.forEach((t,i)=>{ if(t==null || L.times[i]==null) return; const dx=Math.abs(t2x(t,w)-x); if(dx<bd){ bd=dx; best={kind:"end",i}; } });
   return best;
 }
+function endTip(i){ return "♪ Break after line "+(i+1)+" · "+fmt(lyrics[curName].ends[i])+" · drag to adjust · Shift+Enter removes"; }
 function showTip(x,text){ const tip=$("tltip"); if(!text){ tip.style.display="none"; return; } tip.textContent=text; tip.style.display="block"; tip.style.left=Math.max(80,Math.min(x, $("tl").clientWidth-80))+"px"; }
 function lineTip(i){ const L=lyrics[curName]; return "Line "+(i+1)+" · "+fmt(L.times[i])+" · "+plainText(L.lines[i].html).replace(/^[→↗↘\s]+/,"").slice(0,60); }
 (function wireTimeline(){
   const c=$("tlc");
   c.addEventListener("pointerdown",e=>{
     if(!dur()) return;
-    const {w}=tlDims(), x=e.offsetX, i=hitMarker(x,w);
+    const {w}=tlDims(), x=e.offsetX, hm=hitMarker(x,w);
     c.setPointerCapture(e.pointerId);
-    tl.drag = i>=0 ? {type:"marker", i, x0:x, moved:false, orig:lyrics[curName].times[i]} : {type:"bg", x0:x, v0:span().slice(), moved:false};
+    tl.drag = hm ? {type: hm.kind==="end"?"end":"marker", i:hm.i, x0:x, moved:false} : {type:"bg", x0:x, v0:span().slice(), moved:false};
   });
   c.addEventListener("pointermove",e=>{
     const {w}=tlDims(), x=e.offsetX, D=tl.drag;
-    if(!D){ const i=hitMarker(x,w); c.style.cursor = i>=0 ? "ew-resize" : "pointer"; showTip(x, i>=0 ? lineTip(i) : dur()? fmt(x2t(x,w)) : ""); return; }
+    if(!D){ const hm=hitMarker(x,w); c.style.cursor = hm ? "ew-resize" : "pointer"; showTip(x, hm ? (hm.kind==="end"?endTip(hm.i):lineTip(hm.i)) : dur()? fmt(x2t(x,w)) : ""); return; }
     if(Math.abs(x-D.x0)>3) D.moved=true;
     if(D.type==="marker" && D.moved){
       const L=lyrics[curName], T=L.times; let t=x2t(x,w);
       let lo=0, hi=dur(); for(let j=D.i-1;j>=0;j--) if(T[j]!=null){ lo=T[j]+0.1; break; } for(let j=D.i+1;j<T.length;j++) if(T[j]!=null){ hi=T[j]-0.1; break; }
       if(!e.shiftKey && snapOn && ana.state==="ready"){ let bd=0.15, bt=null; for(const o of ana.onsets){ const dd=Math.abs(o.t-t); if(o.s>=10 && dd<bd){ bd=dd; bt=o.t-0.03; } } if(bt!=null) t=bt; }
       T[D.i]=+Math.max(lo,Math.min(hi,t)).toFixed(2); lastCur=-2; showTip(x, lineTip(D.i));
+    } else if(D.type==="end" && D.moved){
+      const L=lyrics[curName], n=nextTimed(D.i), lo=L.times[D.i]+0.3, hi=(n>=0?L.times[n]:dur())-0.3;
+      L.ends[D.i]=+Math.max(lo,Math.min(hi,x2t(x,w))).toFixed(2); lastCur=-2; showTip(x, endTip(D.i));
     } else if(D.type==="bg" && D.moved && tl.view){
       const [a,b]=D.v0, sp=b-a, dt=(D.x0-x)/w*sp, na=Math.max(0,Math.min(dur()-sp,a+dt)); tl.view=[na,na+sp];
     }
@@ -900,6 +982,8 @@ function lineTip(i){ const L=lyrics[curName]; return "Line "+(i+1)+" · "+fmt(L.
     if(D.type==="marker"){
       if(D.moved){ saveLocal(); updateTsLabels(); updateTimedChip(); lastCur=-2; }
       else gotoLine(D.i);
+    } else if(D.type==="end"){
+      if(D.moved){ saveLocal(); lastCur=-2; } else seek(Math.max(0,lyrics[curName].ends[D.i]-1.5));
     } else if(!D.moved){ seek(x2t(x,w)); }
   };
   c.addEventListener("pointerup",end);
@@ -1041,7 +1125,7 @@ $("btnClear").onclick=()=>{
   $("timingMenu").open=false;
   if(!curName) return;
   if(!confirm("Erase all timing for "+curName+"?\n(Any .timing.json files you saved are not touched.)")) return;
-  const L=lyrics[curName]; L.times=L.times.map(()=>null); saveLocal(); updateTsLabels(); updateTimedChip();
+  const L=lyrics[curName]; L.times=L.times.map(()=>null); L.ends=L.ends.map(()=>null); saveLocal(); updateTsLabels(); updateTimedChip();
   syncIdx=0; manualIdx=-1; seek(0); lastCur=-2; toast("Timing cleared");
 };
 $("btnFsUp").onclick=()=>{ fs=Math.min(120,fs+4); applyFs(); };
@@ -1069,6 +1153,9 @@ $("btnB").onclick=()=>setMark("B");
 $("btnLoopOff").onclick=()=>{ clearLoop(); toast("Loop off"); };
 $("btnRec").onclick=()=>{ rec.active?stopRec():startRec(); };
 $("btnTakes").onclick=()=>{ renderTakes(); $("takes").classList.toggle("show"); };
+function updateAutoBrkUI(){ $("btnAutoBrk").textContent="♪ Estimate breaks: "+(autoBrk?"on":"off"); }
+$("btnAutoBrk").onclick=()=>{ autoBrk=!autoBrk; store.set("phrasecue:autobrk",autoBrk); updateAutoBrkUI(); lastCur=-2; };
+updateAutoBrkUI();
 $("btnSnap").onclick=()=>{ snapOn=!snapOn; store.set("phrasecue:snap",snapOn); updateSnapUI(); };
 $("lat").oninput=e=>{ micLatency=+e.target.value; store.set("phrasecue:lat",micLatency); syncLatUI(); };
 syncLatUI(); updateSnapUI(); updateLoopUI(); renderTakes();
@@ -1095,6 +1182,7 @@ document.addEventListener("keydown",e=>{
   else if(k==="ArrowUp"){ e.preventDefault(); stepLine(-1); }
   else if(k==="ArrowDown"){ e.preventDefault(); stepLine(1); }
   else if(k==="Backspace"){ if(mode==="sync"){ e.preventDefault(); undoStamp(); } }
+  else if(k==="Enter"){ e.preventDefault(); if(!e.repeat) markBreak(e.shiftKey); }
   else if(k==="["||k==="{"){ nudge(-0.1, e.shiftKey||k==="{"); }
   else if(k==="]"||k==="}"){ nudge(0.1, e.shiftKey||k==="}"); }
   else if(k==="+"||k==="="){ fs=Math.min(120,fs+4); applyFs(); }
