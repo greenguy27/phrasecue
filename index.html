@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#0d0e12">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230d0e12'/%3E%3Cpath d='M14 40h22' stroke='%235f6270' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M14 28h36' stroke='%23f2b84b' stroke-width='6' stroke-linecap='round'/%3E%3Cpath d='M44 36l8 6-8 6' fill='none' stroke='%237fb8ff' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <!--
-  PhraseCue v1.2.0 — a lyric prompter for singers, built around vocal-phrasing notes.
+  PhraseCue v1.3.0 — a lyric prompter for singers, built around vocal-phrasing notes.
   Copyright (c) 2026 Chris Ross / CRBooks.ink — MIT License (see LICENSE).
   https://github.com/greenguy27/phrasecue
 
@@ -268,6 +268,7 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
     <label>Credit line <input type="text" id="vxCredit" placeholder="e.g. artist name · crbooks.ink" maxlength="80"></label>
     <label class="chk"><input type="checkbox" id="vxTitle" checked> Title card at the start and end</label>
     <label class="chk"><input type="checkbox" id="vxClean"> Hide phrasing marks (arrows, slashes, dashes, bold)</label>
+    <label class="chk" title="A small, see-through tag in the corner and a line on the end card"><input type="checkbox" id="vxMark"> “Made with PhraseCue” tag</label>
   </div>
   <canvas id="vxPreview" class="vprev"></canvas>
   <p class="hint" id="vxFormat"></p>
@@ -283,7 +284,7 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
 <script>
 "use strict";
 const $ = id => document.getElementById(id);
-const APP = {name:"PhraseCue", version:"1.2.0", repo:"https://github.com/greenguy27/phrasecue", site:"https://crbooks.ink"};
+const APP = {name:"PhraseCue", version:"1.3.0", repo:"https://github.com/greenguy27/phrasecue", site:"https://crbooks.ink"};
 const store = {
   get(k, d){ try{ const v = localStorage.getItem(k); return v==null ? d : JSON.parse(v); }catch(e){ return d; } },
   set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
@@ -1249,7 +1250,10 @@ function drawVideoFrame(g, W, H, t){
       if(n>=0){ if(left<=3.5) center(String(Math.ceil(left)), y-base*1.1, Math.round(base*0.9), "#f2b84b","800",0.95);
         const sn=secName(n); let yy=H*0.6; if(sn){ center(sn.toUpperCase(), yy, Math.round(base*0.36), "#f2b84b","700",0.8); yy+=base*0.3; }
         drawRunsBlock(g, runsOf(n), cx, yy, small, maxW, "#9a9cab", "#c9cbd6", 0.75); }
-    } else if(o.titleCard){ center(titleText.toUpperCase(), y+base*1.8, Math.round(base*0.7), "#f2b84b","800",ease*0.9); if(o.credit) center(o.credit, y+base*2.5, Math.round(base*0.45), "#ece8df","500",ease*0.8); }
+    } else {
+      if(o.titleCard){ center(titleText.toUpperCase(), y+base*1.8, Math.round(base*0.7), "#f2b84b","800",ease*0.9); if(o.credit) center(o.credit, y+base*2.5, Math.round(base*0.45), "#ece8df","500",ease*0.8); }
+      if(o.mark) center("Made with PhraseCue · free at greenguy27.github.io/phrasecue", H*0.86, Math.round(base*0.34), "#9a9cab","500",ease*0.85);
+    }
     drawProgress(g,W,H,t); return;
   }
   // previous line (faded), current (big), next (dim)
@@ -1267,10 +1271,17 @@ function drawVideoFrame(g, W, H, t){
     const n2=nextTimed(n); if(n2>=0 && !secName(n2) && o.shape!=="landscape") drawRunsBlock(g,runsOf(n2),cx,yy+nh+base*0.2,small,maxW,"#5f6270","#7a7d8c",0.6); }
   drawProgress(g,W,H,t);
 }
-function drawProgress(g,W,H,t){ const p=Math.min(1,Math.max(0,(t-vx.a)/((vx.b-vx.a)||1))); g.fillStyle="rgba(255,255,255,.08)"; g.fillRect(0,H-6,W,6); g.fillStyle="rgba(242,184,75,.7)"; g.fillRect(0,H-6,W*p,6); }
+function drawWatermark(g,W,H){
+  if(!vx.opts || !vx.opts.mark) return;
+  const sz=Math.round(Math.min(W,H)*0.022), pad=Math.round(sz*1.2);
+  g.font="600 "+sz+"px system-ui,-apple-system,'Segoe UI',Roboto,sans-serif"; g.textAlign="right"; g.textBaseline="alphabetic";
+  g.globalAlpha=0.45; g.fillStyle="#ece8df"; g.fillText("Made with PhraseCue", W-pad, H-pad-6);
+  g.globalAlpha=1; g.textAlign="left";
+}
+function drawProgress(g,W,H,t){ drawWatermark(g,W,H); const p=Math.min(1,Math.max(0,(t-vx.a)/((vx.b-vx.a)||1))); g.fillStyle="rgba(255,255,255,.08)"; g.fillRect(0,H-6,W,6); g.fillStyle="rgba(242,184,75,.7)"; g.fillRect(0,H-6,W*p,6); }
 function readVideoOpts(){
   return {audio:$("vxAudio").value, shape:$("vxShape").value, range:$("vxRange").value, clean:$("vxClean").checked,
-          titleCard:$("vxTitle").checked, credit:$("vxCredit").value.trim(), dim:+$("vxDim").value};
+          titleCard:$("vxTitle").checked, credit:$("vxCredit").value.trim(), dim:+$("vxDim").value, mark:$("vxMark").checked};
 }
 function previewVideo(){
   if(!curName || !dur()){ return; }
@@ -1413,7 +1424,9 @@ $("btnVideo").onclick=openVideoPanel;
 $("vxClose").onclick=()=>{ if(vx.active && !confirm("Stop recording the video?")) return; stopVideo(true); $("video").classList.remove("show"); };
 $("vxCancel").onclick=()=>stopVideo(true);
 $("vxStart").onclick=startVideo;
-["vxAudio","vxShape","vxRange","vxClean","vxTitle","vxCredit","vxDim"].forEach(id=>$(id).addEventListener("input",()=>{ if(!vx.active) previewVideo(); }));
+$("vxMark").checked=store.get("phrasecue:mark", true);
+$("vxMark").addEventListener("change",e=>store.set("phrasecue:mark",e.target.checked));
+["vxAudio","vxShape","vxRange","vxClean","vxTitle","vxCredit","vxDim","vxMark"].forEach(id=>$(id).addEventListener("input",()=>{ if(!vx.active) previewVideo(); }));
 $("vxBgBtn").onclick=()=>$("vxBgIn").click();
 $("vxBgIn").onchange=e=>{ const f=e.target.files[0]; if(!f) return; const im=new Image(); im.onload=()=>{ vx.bg=im; $("vxBgClear").style.display=""; previewVideo(); }; im.src=URL.createObjectURL(f); e.target.value=""; };
 $("vxBgClear").onclick=()=>{ vx.bg=null; $("vxBgClear").style.display="none"; previewVideo(); };

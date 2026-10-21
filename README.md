@@ -92,6 +92,7 @@ During an instrumental break, the last line dims and a **♪ Instrumental** bar 
 - **Shape:** landscape 1920×1080 (YouTube), vertical 1080×1920 (Shorts, Reels, TikTok) or square 1080×1080.
 - **Range:** the whole song, or just the current loop. That's handy for a chorus teaser: loop the chorus with `Shift`+`L`, then export.
 - **Look:** an optional background image (your cover art works well) with a darkness slider, a title card with your credit line, section labels, ♪ instrumental breaks, and an option to hide phrasing marks for a clean public video.
+- **"Made with PhraseCue" tag:** a small see-through tag in the corner, plus a line on the end card. It's on by default; untick it in the video panel to turn it off.
 - **Format:** MP4 (H.264) when your browser can record it, otherwise WebM. The panel shows which before you record. YouTube accepts both. For Instagram and TikTok, convert WebM to MP4 with a free tool such as HandBrake.
 - **It records in real time,** so a 4-minute song takes 4 minutes. Keep the tab open and visible while it records.
 

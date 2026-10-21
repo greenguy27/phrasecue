@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.3.0 (in testing)
+- Optional "Made with PhraseCue" tag on exported videos: small corner tag + end-card line; on by default, untick to remove (remembered)
+
 ## 1.2.0 (2026-10-21)
 - **🎬 Video export:** lyric or karaoke videos, landscape / vertical / square; whole song or current loop; background image, title card, credit line, optional clean (no phrasing marks) style; MP4 (H.264) when supported, otherwise WebM
 
