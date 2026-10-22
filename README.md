@@ -74,6 +74,27 @@ The first line is the title. Lines in `( )` or `[ ]` are section headers, and ev
 | `---` | Ignored (spacing only) |
 | Any other line | Lyric line that gets timed |
 
+### Suno-style lyrics
+```
+[Style: Dark Americana, Blues Rock]
+[Verse 1]
+[Male vocal, low and close]
+First line of the verse
+Second line (echo)
+
+[Instrumental Break]
+
+[Chorus]
+...
+```
+PhraseCue reads these the way they're written for Suno:
+- **Sections:** `[Verse 1]`, `[Chorus]`, `[Bridge]` and so on become section headers.
+- **Breaks:** `[Instrumental Break]` or `[Guitar Solo]` with no lyrics under it names the instrumental break.
+- **Directions:** tags like `[Male vocal, soft]` show as performance notes, and a combined tag like `[Chorus, both vocals]` gives a header plus a note.
+- **Style lines:** `[Style: …]` shows as a small line under the title.
+- **Backing lines:** a whole line in `( )` shows smaller and isn't timed. A `(word)` inside a lyric line is shown dimmer.
+- **Title:** a short first line followed by a blank line becomes the title. If there isn't one, the file name is used.
+
 ### LRC
 Standard `[mm:ss.xx] lyric` files load already timed.
 

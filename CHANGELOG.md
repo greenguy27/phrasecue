@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.4.0 (in testing)
+- **Suno-style lyrics:** `[Verse]` / `[Chorus]` sections, `[Instrumental Break]` named breaks, `[Male vocal, …]` performance notes, `[Style: …]` meta line, `( )` backing lines (untimed) and inline `(echo)` dimmed
+
 ## 1.3.1 (2026-10-21)
 - Welcome screen byline now shows the GitHub name (greenguy27, linked to the GitHub profile) · CRBooks.ink
 
