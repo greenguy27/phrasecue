@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.3.1 (2026-10-21)
+- Welcome screen byline now shows the GitHub name (greenguy27, linked to the GitHub profile) · CRBooks.ink
+
 ## 1.3.0 (2026-10-21)
 - New welcome screen: app name and logo, "by Chris Ross · CRBooks.ink", version, what it does, 3 quick steps, privacy note, links to help, About and source
 - Optional "Made with PhraseCue" tag on exported videos: small corner tag + end-card line; on by default, untick to remove (remembered)
