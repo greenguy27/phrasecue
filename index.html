@@ -95,10 +95,23 @@ details.menu[open] summary{border-color:var(--mid)}
 label.small{font-size:13px;color:var(--mid);display:flex;align-items:center;gap:6px}
 .drop{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(13,14,18,.92);z-index:20;padding:20px}
 .drop.hidden{display:none}
-.dropbox{border:2px dashed var(--line);border-radius:16px;padding:36px 40px;max-width:640px;text-align:center;background:var(--panel)}
-.dropbox h2{margin:0 0 10px;color:var(--accent)}
-.dropbox p{color:var(--mid);line-height:1.5}
-.dragging .dropbox{border-color:var(--accent)}
+.dropbox{border:1px solid var(--line);border-radius:18px;padding:30px 34px;max-width:660px;width:100%;text-align:center;background:var(--panel);max-height:94vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.brandrow{display:flex;align-items:center;justify-content:center;gap:14px;text-align:left}
+.brandrow .logo{width:58px;height:58px;flex:0 0 auto}
+.brandrow h1{margin:0;font-size:34px;letter-spacing:.01em;color:var(--fg)}
+.dropbox .by{margin:2px 0 0;font-size:14px;color:var(--mid)}
+.dropbox a{color:var(--target)}
+.dropbox .tag{color:var(--fg);font-size:16px;line-height:1.5;margin:16px auto 10px;max-width:520px}
+.steps{list-style:none;counter-reset:s;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding:0;margin:6px 0 16px}
+.steps li{counter-increment:s;background:var(--panel2);border:1px solid var(--line);border-radius:99px;padding:5px 12px 5px 6px;font-size:13px;color:var(--mid)}
+.steps li::before{content:counter(s);display:inline-block;width:20px;height:20px;line-height:20px;border-radius:50%;background:var(--accent);color:#1a1405;font-weight:700;font-size:12px;margin-right:7px;text-align:center}
+.steps li b{color:var(--fg)}
+.dropzone{border:2px dashed var(--line);border-radius:14px;padding:18px 20px;transition:border-color .2s,background .2s}
+.dropzone h2{margin:0 0 6px;color:var(--accent);font-size:20px}
+.dropzone p{color:var(--mid);line-height:1.5;font-size:14px;margin:0 0 12px}
+.dragging .dropzone{border-color:var(--accent);background:rgba(242,184,75,.06)}
+.dropbox .fine{font-size:12px;color:var(--dim);line-height:1.6;margin:14px 0 0}
+@media (max-width:560px){.dropbox{padding:22px 18px}.brandrow h1{font-size:28px}}
 .help{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:30}
 .help.show{display:flex}
 .helpbox{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 26px;max-width:680px;width:92vw;max-height:88vh;overflow:auto}
@@ -203,13 +216,23 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
 
 <div class="drop" id="drop">
   <div class="dropbox">
-    <h2>Drop your song files here</h2>
-    <p>Drag in everything at once:<br>
-      the <b>full mix MP3</b>, the <b>no-vocal MP3</b> (a name with “without”, “instrumental”, “karaoke” or “no vocal”),<br>
-      and your <b>lyrics .txt</b> files (plain and/or vocal-phrasing).<br>
-      Add a saved <b>.timing.json</b> or an <b>.lrc</b> file if you have one.</p>
-    <button id="btnPick">📂 Choose files…</button>
-    <p style="font-size:13px">Files stay on this computer; nothing is uploaded.</p>
+    <div class="brandrow">
+      <svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1d202b"/><path d="M14 40h22" stroke="#5f6270" stroke-width="5" stroke-linecap="round"/><path d="M14 28h36" stroke="#f2b84b" stroke-width="6" stroke-linecap="round"/><path d="M44 36l8 6-8 6" fill="none" stroke="#7fb8ff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div><h1>PhraseCue</h1><p class="by">by <b>Chris Ross</b> · <a href="https://crbooks.ink" target="_blank" rel="noopener">CRBooks.ink</a> · <span id="dropVer"></span></p></div>
+    </div>
+    <p class="tag">A free lyric prompter for singers. Time your lyrics once, then sing along with phrasing cues, practice loops, recording and lyric-video export.</p>
+    <ol class="steps">
+      <li><b>Load</b> your song and lyrics</li>
+      <li><b>Tap</b> once through to time it</li>
+      <li><b>Sing</b>, practice or export a video</li>
+    </ol>
+    <div class="dropzone">
+      <h2>Drop your song files here</h2>
+      <p>Drag in everything at once: the <b>full mix</b>, the <b>instrumental</b> (a file name with “without”, “instrumental”, “karaoke” or “no vocal”) and your <b>lyrics .txt</b>. Add a saved <b>.timing.json</b> or <b>.lrc</b> if you have one.</p>
+      <button id="btnPick" class="on">📂 Choose files…</button>
+    </div>
+    <p class="fine">🔒 Runs entirely in your browser. Your files are never uploaded, and there's no tracking.<br>
+      <a href="#" id="dropHelp">How it works</a> · <a href="#" id="dropAbout">About</a> · <a href="https://github.com/greenguy27/phrasecue" target="_blank" rel="noopener">Source on GitHub</a> · MIT License</p>
   </div>
 </div>
 
@@ -1401,6 +1424,9 @@ $("btnAbout").onclick=()=>$("about").classList.add("show");
 $("btnAboutClose").onclick=()=>$("about").classList.remove("show");
 $("about").onclick=e=>{ if(e.target.id==="about") $("about").classList.remove("show"); };
 $("aboutVer").textContent="Version "+APP.version;
+$("dropVer").textContent="v"+APP.version;
+$("dropHelp").onclick=e=>{ e.preventDefault(); $("help").classList.add("show"); };
+$("dropAbout").onclick=e=>{ e.preventDefault(); $("about").classList.add("show"); };
 $("help").onclick=e=>{ if(e.target.id==="help") $("help").classList.remove("show"); };
 $("showTs").onchange=e=>document.body.classList.toggle("hide-ts",!e.target.checked);
 $("lead").oninput=e=>{ lead=+e.target.value; store.set("phrasecue:lead",lead); syncLeadUI(); lastCur=-2; };
