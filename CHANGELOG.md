@@ -1,6 +1,7 @@
 # Changelog
 
 ## 1.4.0 (in testing)
+- **Asks which MP3 is the karaoke version** when the file names don't say (no more silent guessing)
 - **📝 Paste / edit lyrics:** type or paste lyrics in any format, saved in the browser, Download .txt, `Ctrl+Enter` to use
 - **Timing survives edits:** lines are matched by text, so only new or changed lines need re-tapping (timing files now include line text; older timing files still load)
 - **Duet / part colors:** `[Male vocal]` / `[Female vocal]` / `[Both vocals]` / `[Part: Name]` / `Name:` prefixes color lines by singer, with a key, colored timeline markers, and singer labels in exported videos

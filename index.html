@@ -245,7 +245,7 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
     </ol>
     <div class="dropzone">
       <h2>Drop your song files here</h2>
-      <p>Drag in everything at once: the <b>full mix</b>, the <b>instrumental</b> (a file name with “without”, “instrumental”, “karaoke” or “no vocal”) and your <b>lyrics .txt</b>. Add a saved <b>.timing.json</b> or <b>.lrc</b> if you have one.</p>
+      <p>Drag in everything at once: the <b>full mix</b>, the <b>instrumental</b> (PhraseCue asks which is which if the names don't say) and your <b>lyrics .txt</b>. Add a saved <b>.timing.json</b> or <b>.lrc</b> if you have one.</p>
       <button id="btnPick" class="on">📂 Choose files…</button>
       <a href="#" class="alt" id="dropPaste">or 📝 paste / type your lyrics</a>
     </div>
@@ -335,6 +335,13 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
     <button id="leClose">Close</button>
     <button id="leUse" class="on">Use these lyrics</button>
   </div>
+</div></div>
+
+<div class="help" id="pickInst"><div class="helpbox" style="max-width:560px">
+  <h3>Which file has no vocals?</h3>
+  <p class="hint" style="color:var(--mid);font-size:14px;line-height:1.45">PhraseCue couldn't tell from the file names. Pick the <b>karaoke / instrumental</b> version. The other file is used as the full mix.</p>
+  <div id="piList" style="display:flex;flex-direction:column;gap:8px;margin:12px 0"></div>
+  <p style="color:var(--dim);font-size:12px;margin:0">Tip: put “Karaoke” or “Instrumental” in the file name and PhraseCue won't need to ask.</p>
 </div></div>
 
 <div class="toast" id="toast"></div>
@@ -572,6 +579,19 @@ function applyTimingFile(obj){
   return target;
 }
 
+// ask which audio file is the instrumental when the file names don't make it clear
+function askWhichInstrumental(files){
+  return new Promise(resolve=>{
+    const box=$("piList"); box.innerHTML="";
+    const done=f=>{ $("pickInst").classList.remove("show"); document.removeEventListener("keydown",onKey,true); resolve(f); };
+    const onKey=e=>{ if(e.key==="Escape"){ e.stopPropagation(); done(null); } };
+    files.forEach(f=>{ const b=document.createElement("button"); b.style.textAlign="left"; b.textContent="🎵 "+f.name; b.onclick=()=>done(f); box.appendChild(b); });
+    const none=document.createElement("button"); none.textContent="None of these. Load the first one as the full mix"; none.style.textAlign="left"; none.onclick=()=>done(null); box.appendChild(none);
+    document.addEventListener("keydown",onKey,true);
+    $("pickInst").classList.add("show");
+  });
+}
+
 // ---------- file loading ----------
 async function loadFiles(fileList){
   const files=[...fileList]; if(!files.length) return;
@@ -579,10 +599,18 @@ async function loadFiles(fileList){
   const texts=files.filter(f=>/\.(txt|md|lrc)$/i.test(f.name));
   const jsons=files.filter(f=>/\.json$/i.test(f.name));
   const instRe=/without|no[ _-]?vocal|instrumental|karaoke|backing|minus|inst\b|accompan/i;
-  for(const f of audio){
-    const url=URL.createObjectURL(f);
-    if(instRe.test(f.name)){ aI.src=url; hasI=true; fileI=f; $("chipI").textContent="Instrumental: "+f.name; $("chipI").classList.add("ok"); }
-    else { aV.src=url; hasV=true; fileV=f; $("chipV").textContent="Full mix: "+f.name; $("chipV").classList.add("ok"); }
+  const setInst=f=>{ aI.src=URL.createObjectURL(f); hasI=true; fileI=f; $("chipI").textContent="Instrumental: "+f.name; $("chipI").classList.add("ok"); };
+  const setFull=f=>{ aV.src=URL.createObjectURL(f); hasV=true; fileV=f; $("chipV").textContent="Full mix: "+f.name; $("chipV").classList.add("ok"); };
+  if(audio.length){
+    const matched=audio.filter(f=>instRe.test(f.name));
+    let instFile=null;
+    if(matched.length===1) instFile=matched[0];
+    else if(audio.length>=2) instFile=await askWhichInstrumental(audio);   // names don't say: ask
+    else if(matched.length===1) instFile=matched[0];
+    if(instFile) setInst(instFile);
+    const full=audio.find(f=>f!==instFile);
+    if(full) setFull(full);
+    if(audio.length>2) toast("Loaded 2 of "+audio.length+" audio files: one full mix and one instrumental");
   }
   let firstNew=null;
   for(const f of texts){
@@ -1664,6 +1692,7 @@ window.addEventListener("resize",()=>drawTL());
 document.addEventListener("mouseup",e=>{ const b=e.target.closest && e.target.closest("button,summary"); if(b) setTimeout(()=>b.blur(),0); });
 
 document.addEventListener("keydown",e=>{
+  if($("pickInst").classList.contains("show")) return;
   if($("lyed").classList.contains("show")){ if(e.key==="Escape") $("lyed").classList.remove("show"); else if(e.key==="Enter" && (e.ctrlKey||e.metaKey)){ e.preventDefault(); useEditedLyrics(); } return; }
   if(e.target.tagName==="SELECT" || e.target.tagName==="TEXTAREA" || (e.target.tagName==="INPUT" && e.target.type!=="range" && e.target.type!=="checkbox")) return;
   if(e.ctrlKey||e.metaKey||e.altKey) return;

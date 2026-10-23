@@ -28,7 +28,7 @@ Load your song's full mix, its instrumental and your lyrics. Tap once through th
 1. Open `index.html` in your browser by double-clicking it, or use the hosted link above.
 2. Drag in your files all at once:
    - the **full mix** audio (MP3, WAV, M4A, OGG, FLAC)
-   - the **instrumental**. Its file name must contain *without*, *instrumental*, *karaoke*, *backing*, *minus* or *no vocal*, so PhraseCue can tell it apart.
+   - the **instrumental**. If its name contains *karaoke*, *instrumental*, *without*, *backing*, *minus* or *no vocal*, it's detected automatically. Otherwise PhraseCue asks which file has no vocals.
    - one or more **lyrics** files (`.txt`, `.md` or `.lrc`)
 3. **Time it, once per lyrics file:** press **S**, then **Space** to start the song, then tap **Space** the moment the singer starts each **blue** line. With both mixes loaded, **🧲 Snap** tightens your taps automatically.
 4. **Sing:** press **S** to leave timing mode, **V** for the instrumental, then **Space** to play.
