@@ -1,6 +1,7 @@
 # Changelog
 
 ## 1.4.0 (in testing)
+- **Duet layout:** singer A left, singer B right, both centered (app + videos, switchable); video option to show singer names above every line, on change, or off (names are labels, never timed)
 - **Asks which MP3 is the karaoke version** when the file names don't say (no more silent guessing)
 - **📝 Paste / edit lyrics:** type or paste lyrics in any format, saved in the browser, Download .txt, `Ctrl+Enter` to use
 - **Timing survives edits:** lines are matched by text, so only new or changed lines need re-tapping (timing files now include line text; older timing files still load)

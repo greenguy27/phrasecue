@@ -103,6 +103,10 @@ Lines are colored by singer. A small color key appears under the title, the time
 
 A part lasts until the next one is set. Songs with only one singer aren't colored.
 
+**Duet layout:** by default, the first singer's lines sit on the **left**, the second singer's on the **right**, and **Both** lines are centered, in the app and in exported videos. Switch it with **Timing ▾ → 👥 Duet layout** (app) or **Duet layout** in the video panel.
+
+**Singer names in videos:** the video panel can show the singer's name **above every line** (good for vertical TikTok, Shorts and Reels), **only when the singer changes**, or not at all. Names come from the singer tags, so they're never counted as lyric lines and never need timing.
+
 ### LRC
 Standard `[mm:ss.xx] lyric` files load already timed.
 
