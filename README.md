@@ -123,6 +123,7 @@ During an instrumental break, the last line dims and a **♪ Instrumental** bar 
 **📝 Lyrics** (or *paste / type your lyrics* on the welcome screen) opens a text box. Paste or type lyrics in any supported format, give them a name, and click **Use these lyrics** (`Ctrl`+`Enter`).
 - Pasted lyrics are saved in your browser and show up in the lyrics menu next time. **⬇ Download .txt** saves a file copy.
 - Opening the box again edits the current lyrics. **Edits keep your timing**: lines are matched by their text, so fixed typos, added lines and removed lines only affect the lines you touched. New lines just need tapping.
+- **No MP3 yet?** You can still paste and read lyrics. Choose **Continue without audio** on the welcome screen, or just click **Use these lyrics**, then step through the lines with `↑` / `↓` or by clicking them. Load the MP3s whenever they're ready to time the song.
 - If you load a lyrics *file* with the same name, the file's text is used, with your timing carried over the same way.
 
 ## Lyric & karaoke videos

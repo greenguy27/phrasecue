@@ -255,6 +255,7 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
       <p>Drag in everything at once: the <b>full mix</b>, the <b>instrumental</b> (PhraseCue asks which is which if the names don't say) and your <b>lyrics .txt</b>. Add a saved <b>.timing.json</b> or <b>.lrc</b> if you have one.</p>
       <button id="btnPick" class="on">📂 Choose files…</button>
       <a href="#" class="alt" id="dropPaste">or 📝 paste / type your lyrics</a>
+      <button id="dropContinue" style="display:none;margin-top:12px">Continue without audio →</button>
     </div>
     <p class="fine">🔒 Runs entirely in your browser. Your files are never uploaded, and there's no tracking.<br>
       <a href="#" id="dropHelp">How it works</a> · <a href="#" id="dropAbout">About</a> · <a href="https://github.com/greenguy27/phrasecue" target="_blank" rel="noopener">Source on GitHub</a> · MIT License</p>
@@ -286,6 +287,7 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
     <tr><td><kbd>,</kbd> <kbd>.</kbd></td><td>Slower / faster (pitch stays the same)</td></tr>
     <tr><td><kbd>R</kbd></td><td>Record yourself / stop</td></tr>
     <tr><td><kbd>T</kbd></td><td>Show your takes</td></tr>
+    <tr><td>No MP3 yet?</td><td>Paste lyrics and choose <b>Continue without audio</b>: read and step through them with <kbd>↑</kbd> <kbd>↓</kbd>, then load the MP3 later</td></tr>
     <tr><td>📝 Lyrics</td><td>Paste, type or edit lyrics (plain, phrasing or Suno-style). <kbd>Ctrl</kbd>+<kbd>Enter</kbd> uses them. Edits keep the timing of unchanged lines</td></tr>
     <tr><td>Duets</td><td><code>[Male vocal]</code>, <code>[Female vocal]</code>, <code>[Both vocals]</code>, <code>[Part: Name]</code> or a <code>Name:</code> line prefix color the lines by singer. Side-by-side layout (A left, B right, both centered) can be switched in Timing ▾</td></tr>
     <tr><td>Click a line</td><td>Jump there</td></tr>
@@ -521,6 +523,10 @@ function assignParts(L){
   L.parts.forEach(p=>{ L.sides[p] = p==="Both" ? "center" : p===solo[0] ? "left" : p===solo[1] ? "right" : "center"; });
 }
 let duetSide = store.get("phrasecue:duet", true);
+let lyricsOnly = false;                       // user chose to read lyrics before the MP3 exists
+const noAudio = () => !hasV && !hasI;
+function updateDropContinue(){ const b=$("dropContinue"); if(b) b.style.display = (noAudio() && Object.keys(lyrics).length) ? "" : "none"; }
+function enterLyricsOnly(){ lyricsOnly=true; $("drop").classList.add("hidden"); toast("Lyrics only: use ↑ / ↓ or click a line to step through. Load the MP3 when it's ready"); }
 function sideOf(L,i,enabled){ const p=L && L.lines[i] && L.lines[i].part; return enabled && p && L.sides && L.sides[p] || "center"; }
 function partColor(L,i){ const p=L && L.lines[i] && L.lines[i].part; return p && L.partColor && L.partColor[p] || null; }
 function hexA(hex,a){ const n=parseInt(hex.slice(1),16); return "rgba("+(n>>16&255)+","+(n>>8&255)+","+(n&255)+","+a+")"; }
@@ -644,6 +650,7 @@ async function loadFiles(fileList){
 }
 
 function refreshLyricSelect(pick){
+  setTimeout(updateDropContinue,0);
   const sel=$("lyricSel"), names=Object.keys(lyrics);
   // prefer the phrasing file by default if no explicit pick
   if(!pick) pick = names.find(n=>/phras/i.test(n)) || names[0];
@@ -704,6 +711,7 @@ function firstUntimed(){ if(!curName) return 0; const i=lyrics[curName].times.fi
 
 function currentIndex(t){
   const L=lyrics[curName]; if(!L) return -1;
+  if(noAudio()) return manualIdx;
   const timed=L.times.some(x=>x!=null);
   if(!timed) return manualIdx;
   let idx=-1;
@@ -802,7 +810,7 @@ function applyVolumes(){
 }
 function both(fn){ if(hasV) fn(aV); if(hasI) fn(aI); }
 async function play(){
-  if(!hasV && !hasI){ $("drop").classList.remove("hidden"); return; }
+  if(!hasV && !hasI){ if(curName){ toast("Load the song's MP3 to play: 📂 Load"); } else $("drop").classList.remove("hidden"); return; }
   const t=now(); both(a=>{ a.currentTime=t; });
   try{ await Promise.all([hasV?aV.play():0, hasI?aI.play():0]); }catch(e){ toast("Browser blocked playback — click Play"); }
   updatePlayBtn();
@@ -852,6 +860,7 @@ requestAnimationFrame(loop);
 // ---------- sync mode ----------
 function setMode(m){
   if(!curName){ toast("Load lyrics first"); return; }
+  if(m==="sync" && noAudio()){ toast("Load the song's MP3 first. Timing follows the audio"); return; }
   mode=m;
   document.body.classList.toggle("sync-on", m==="sync");
   $("btnSync").classList.toggle("on", m==="sync");
@@ -925,13 +934,13 @@ function gotoLine(i){
     const t = prev!=null ? prev-0.5 : own!=null ? own-3 : 0;
     seek(Math.max(0,t)); lastCur=-2; return;
   }
-  if(L.times[i]!=null){ seek(Math.max(0,L.times[i]-lead-0.75)); }
+  if(L.times[i]!=null && !noAudio()){ seek(Math.max(0,L.times[i]-lead-0.75)); }
   else { manualIdx=i; lastCur=-2; paint(); }
 }
 function stepLine(d){
   const L=lyrics[curName]; if(!L) return;
   if(mode==="sync"){ gotoLine(syncIdx+d); return; }
-  const timed=L.times.some(x=>x!=null);
+  const timed=L.times.some(x=>x!=null) && !noAudio();
   const cur = timed ? currentIndex(now()+lead) : manualIdx;
   gotoLine(cur+d);
 }
@@ -1519,6 +1528,7 @@ function previewVideo(){
 }
 function openVideoPanel(){
   if(!curName){ toast("Load lyrics first"); return; }
+  if(noAudio()){ toast("Load the song's MP3 first. The video uses its audio"); return; }
   if(!lyrics[curName].times.some(x=>x!=null)){ toast("Time the lyrics first — the video follows your timing"); return; }
   $("vxLyrics").textContent=curName;
   const fmtL=videoFormatLabel();
@@ -1682,7 +1692,8 @@ function useEditedLyrics(){
   $("lyed").classList.remove("show");
   const L=lyrics[name];
   toast(had ? "Updated "+name+" · kept timing for "+kept+" of "+L.lines.length+" lines" : "Using "+name+" · "+L.lines.length+" lines");
-  if((hasV||hasI)) $("drop").classList.add("hidden");
+  $("drop").classList.add("hidden"); if(noAudio()) lyricsOnly=true;
+  updateDropContinue();
 }
 function restorePasted(){
   const all=pastedAll(); const names=Object.keys(all);
@@ -1691,6 +1702,7 @@ function restorePasted(){
 }
 $("btnLyrics").onclick=()=>openLyricsEditor(false);
 $("dropPaste").onclick=e=>{ e.preventDefault(); openLyricsEditor(true); };
+$("dropContinue").onclick=enterLyricsOnly;
 $("leText").addEventListener("input",()=>{ clearTimeout(openLyricsEditor._t); openLyricsEditor._t=setTimeout(()=>{ $("leInfo").textContent=describeLyrics($("leText").value); },250); });
 $("leUse").onclick=useEditedLyrics;
 $("leClose").onclick=()=>$("lyed").classList.remove("show");
@@ -1698,7 +1710,7 @@ $("leNew").onclick=()=>{ $("leName").value=""; $("leText").value=""; $("leInfo")
 $("leDownload").onclick=()=>{ const n=($("leName").value.trim()||"lyrics").replace(/[\\/:*?"<>|]+/g,"-"); download(/\.(txt|md|lrc)$/i.test(n)?n:n+".txt", $("leText").value, "text/plain"); };
 $("leDelete").onclick=()=>{ const n=$("leName").value.trim(); const all=pastedAll(); if(all[n]){ delete all[n]; store.set(PASTED_KEY, all); toast("Forgot the saved copy of "+n+" (still open for now)"); } else toast("No saved copy named "+(n||"that")); };
 $("lyed").addEventListener("click",e=>{ if(e.target.id==="lyed") $("lyed").classList.remove("show"); });
-restorePasted();
+restorePasted(); updateDropContinue();
 
 $("btnVideo").onclick=openVideoPanel;
 $("vxClose").onclick=()=>{ if(vx.active && !confirm("Stop recording the video?")) return; stopVideo(true); $("video").classList.remove("show"); };
@@ -1761,7 +1773,7 @@ document.addEventListener("keydown",e=>{
 let dragDepth=0;
 window.addEventListener("dragenter",e=>{ e.preventDefault(); dragDepth++; $("drop").classList.remove("hidden"); document.body.classList.add("dragging"); });
 window.addEventListener("dragover",e=>e.preventDefault());
-window.addEventListener("dragleave",()=>{ if(--dragDepth<=0){ dragDepth=0; document.body.classList.remove("dragging"); if(curName&&(hasV||hasI)) $("drop").classList.add("hidden"); } });
+window.addEventListener("dragleave",()=>{ if(--dragDepth<=0){ dragDepth=0; document.body.classList.remove("dragging"); if(curName&&(hasV||hasI||lyricsOnly)) $("drop").classList.add("hidden"); } });
 window.addEventListener("drop",e=>{ e.preventDefault(); dragDepth=0; document.body.classList.remove("dragging"); loadFiles(e.dataTransfer.files); });
 
 </script>
