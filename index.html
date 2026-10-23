@@ -43,6 +43,20 @@ header,footer{flex:0 0 auto}
 .title{font-size:calc(var(--fs)*.9);font-weight:800;color:var(--accent);margin-bottom:.2em}
 .meta{font-size:calc(var(--fs)*.4);color:var(--mid);font-style:italic}
 .section{font-size:calc(var(--fs)*.42);font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:1.6em 0 .3em;opacity:.85}
+.line.parted{box-shadow:inset 4px 0 0 var(--pc)}
+.line.parted.cur{color:var(--pc)}
+.line.parted.next{color:color-mix(in srgb,var(--pc) 55%,var(--mid))}
+.backing.parted{color:color-mix(in srgb,var(--pc) 60%,var(--mid))}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:calc(var(--fs)*.34);margin:.5em 0 .8em;color:var(--mid)}
+.legend span{display:inline-flex;align-items:center;gap:.4em}
+.legend i{width:.75em;height:.75em;border-radius:50%;background:var(--c);display:inline-block}
+.ledbox{max-width:820px}
+.ledbox .hint{font-size:13px;color:var(--mid);line-height:1.45;margin:.3em 0 .6em}
+.ledbox input[type=text]{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 10px;margin-bottom:8px}
+.ledbox textarea{width:100%;min-height:46vh;background:#0f1117;color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:14px/1.5 ui-monospace,Menlo,Consolas,monospace;resize:vertical}
+.ledbox .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:10px}
+.ledbox #leInfo{font-size:13px;color:var(--mid);margin:6px 0 0}
+.dropzone .alt{display:block;margin-top:10px;font-size:13px}
 .backing{font-size:calc(var(--fs)*.55);color:var(--mid);font-style:italic;margin:.05em 0 .25em;opacity:.85}
 .line .bk{color:var(--mid);font-style:italic;font-weight:400}
 .note{font-size:calc(var(--fs)*.4);color:var(--mid);font-style:italic;margin:.1em 0 .35em}
@@ -160,6 +174,7 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
         <button id="btnAutoBrk" title="Show long gaps between lines as instrumental breaks, even where you haven't marked one with Enter"></button>
       </div>
     </details>
+    <button id="btnLyrics" title="Paste, type or edit lyrics">📝 Lyrics</button>
     <button id="btnVideo" title="Export a lyric or karaoke video">🎬 Video</button>
     <button id="btnFsDown" title="-">A−</button>
     <button id="btnFsUp" title="+">A+</button>
@@ -232,6 +247,7 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
       <h2>Drop your song files here</h2>
       <p>Drag in everything at once: the <b>full mix</b>, the <b>instrumental</b> (a file name with “without”, “instrumental”, “karaoke” or “no vocal”) and your <b>lyrics .txt</b>. Add a saved <b>.timing.json</b> or <b>.lrc</b> if you have one.</p>
       <button id="btnPick" class="on">📂 Choose files…</button>
+      <a href="#" class="alt" id="dropPaste">or 📝 paste / type your lyrics</a>
     </div>
     <p class="fine">🔒 Runs entirely in your browser. Your files are never uploaded, and there's no tracking.<br>
       <a href="#" id="dropHelp">How it works</a> · <a href="#" id="dropAbout">About</a> · <a href="https://github.com/greenguy27/phrasecue" target="_blank" rel="noopener">Source on GitHub</a> · MIT License</p>
@@ -263,6 +279,8 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
     <tr><td><kbd>,</kbd> <kbd>.</kbd></td><td>Slower / faster (pitch stays the same)</td></tr>
     <tr><td><kbd>R</kbd></td><td>Record yourself / stop</td></tr>
     <tr><td><kbd>T</kbd></td><td>Show your takes</td></tr>
+    <tr><td>📝 Lyrics</td><td>Paste, type or edit lyrics (plain, phrasing or Suno-style). <kbd>Ctrl</kbd>+<kbd>Enter</kbd> uses them. Edits keep the timing of unchanged lines</td></tr>
+    <tr><td>Duets</td><td><code>[Male vocal]</code>, <code>[Female vocal]</code>, <code>[Both vocals]</code>, <code>[Part: Name]</code> or a <code>Name:</code> line prefix color the lines by singer</td></tr>
     <tr><td>Click a line</td><td>Jump there</td></tr>
     <tr><td>Timeline</td><td>Click to jump · drag a line marker to retime it (hold <kbd>Shift</kbd> to skip snapping) · scroll to zoom, drag to pan</td></tr>
   </table>
@@ -301,6 +319,22 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
   <p style="text-align:right;margin-bottom:0;display:flex;gap:8px;justify-content:flex-end">
     <button id="vxCancel" style="display:none">Cancel</button><button id="vxClose">Close</button><button id="vxStart" class="on">● Record video</button></p>
   <input type="file" id="vxBgIn" accept="image/*" hidden>
+</div></div>
+
+<div class="help" id="lyed"><div class="helpbox ledbox">
+  <h3>📝 Lyrics</h3>
+  <p class="hint">Paste or type lyrics in any format PhraseCue reads: plain, vocal phrasing (arrows, <b>**bold**</b>, <code>//</code>) or Suno-style <code>[Verse]</code> / <code>[Male vocal]</code> tags. They're saved in this browser. Editing keeps the timing of every line you didn't change.</p>
+  <input type="text" id="leName" placeholder="Name, e.g. Luna Bloom – phrasing" maxlength="100">
+  <textarea id="leText" spellcheck="false" placeholder="[Verse 1]&#10;[Male vocal]&#10;First line…"></textarea>
+  <p id="leInfo"></p>
+  <div class="row">
+    <button id="leNew" title="Start a new, empty lyrics sheet">New</button>
+    <button id="leDownload" title="Save these lyrics as a .txt file">⬇ Download .txt</button>
+    <button id="leDelete" title="Remove the copy saved in this browser">🗑 Forget saved copy</button>
+    <span class="spacer"></span>
+    <button id="leClose">Close</button>
+    <button id="leUse" class="on">Use these lyrics</button>
+  </div>
 </div></div>
 
 <div class="toast" id="toast"></div>
@@ -437,6 +471,68 @@ function parseLrc(txt){
   return {items, lrcTimes};
 }
 
+// ---- singer parts (duets): set by directions like [Male vocal], [Female vocal], [Both vocals], [Part: Lila] or a "Lila:" line prefix ----
+const PART_DIRECTION_WORDS=/^(spoken|speak|whisper(ed|s)?|soft(ly)?|belt(ed)?|falsetto|build(ing)?|drop|fade|ad[- ]?libs?|echo|harmony|harmonies|choir|instrumental|slow|fast|powerful|quiet|loud|gentle|raw|intimate|restrained|reflective|beat|drums|guitar|piano|bass|strings|layered|rising|lift)$/i;
+const PART_COLORS={Male:"#6fd3e8", Female:"#ff9ec4", Both:"#c7a8ff"};
+const EXTRA_COLORS=["#7ee0b5","#ffb86b","#e6e07a","#9fb4ff","#ff8f7a"];
+function partFromDirection(text){
+  const t=text.trim(), named=t.match(/^(?:part|singer|voice|vocal)\s*:\s*(.{1,24})$/i);
+  if(named) return named[1].trim();
+  if(/\b(both|duet|together|all vocals|everyone|choir|group)\b/i.test(t)) return "Both";
+  if(/\b(female|woman|women|girl)\b/i.test(t)) return "Female";
+  if(/\b(male|man|men|boy)\b/i.test(t)) return "Male";
+  const nm=t.match(/^([A-Z][A-Za-z'.-]{1,15}(?: [A-Z][A-Za-z'.-]{1,15})?)(?:\s+vocals?)?$/);
+  if(nm && !PART_DIRECTION_WORDS.test(nm[1])) return nm[1];
+  return null;
+}
+function assignParts(L){
+  let cur=null;
+  for(const it of L.items){
+    if(it.type==="note"){ const p=partFromDirection(plainText(it.html).replace(/^\(|\)$/g,"")); if(p) cur=p; continue; }
+    if(it.type==="line"){
+      // "Name: lyric" prefix sets the part and is removed from the sung text
+      const m=it.html.match(/^((?:<[^>]+>)*)([A-Z][A-Za-z'.-]{1,15}(?: [A-Z][A-Za-z'.-]{1,15})?)\s*:\s+(?=\S)/);
+      if(m && !PART_DIRECTION_WORDS.test(m[2]) && !/^(chorus|verse|bridge|intro|outro|hook|refrain)$/i.test(m[2])){ cur=m[2]; it.html=m[1]+it.html.slice(m[0].length); }
+      it.part=cur; continue;
+    }
+    if(it.type==="backing") it.part=cur;
+  }
+  const used=[]; L.lines.forEach(l=>{ if(l.part && !used.includes(l.part)) used.push(l.part); });
+  L.parts = used.length>=2 ? used : [];
+  let k=0; L.partColor={}; L.parts.forEach(p=>{ L.partColor[p]=PART_COLORS[p]||EXTRA_COLORS[(k++)%EXTRA_COLORS.length]; });
+}
+function partColor(L,i){ const p=L && L.lines[i] && L.lines[i].part; return p && L.partColor && L.partColor[p] || null; }
+function hexA(hex,a){ const n=parseInt(hex.slice(1),16); return "rgba("+(n>>16&255)+","+(n>>8&255)+","+(n&255)+","+a+")"; }
+
+// ---- timing that survives edits: match old lines to new lines by their text ----
+const normLine = html => plainText(html).toLowerCase().replace(/[^\p{L}\p{N}]+/gu," ").trim();
+const timingKey2 = name => "phrasecue:tm:" + name;
+function alignLines(oldT, newT){
+  const n=oldT.length, m=newT.length, D=Array.from({length:n+1},()=>new Uint16Array(m+1));
+  for(let i=n-1;i>=0;i--) for(let j=m-1;j>=0;j--) D[i][j] = oldT[i]===newT[j] ? D[i+1][j+1]+1 : Math.max(D[i+1][j], D[i][j+1]);
+  const map=new Array(m).fill(-1); const pairs=[]; let i=0, j=0;
+  while(i<n && j<m){ if(oldT[i]===newT[j]){ map[j]=i; pairs.push([i,j]); i++; j++; } else if(D[i+1][j]>=D[i][j+1]) i++; else j++; }
+  // lines edited in place (same count of unmatched lines between two anchors) keep their timing too
+  const anchors=[[-1,-1],...pairs,[n,m]];
+  for(let k=0;k<anchors.length-1;k++){ const [oi,nj]=anchors[k], [oi2,nj2]=anchors[k+1]; if(oi2-oi===nj2-nj) for(let d=1; d<nj2-nj; d++) map[nj+d]=oi+d; }
+  return map;
+}
+function restoreTiming(L, sv){
+  if(!sv || !Array.isArray(sv.times)) return 0;
+  const newT=L.lines.map(l=>normLine(l.html));
+  if(!Array.isArray(sv.texts) || (sv.texts.length===newT.length && sv.texts.every((t,i)=>t===newT[i]))){
+    if(sv.times.length!==L.lines.length) return 0;
+    L.times=sv.times.slice(); if(Array.isArray(sv.ends) && sv.ends.length===L.lines.length) L.ends=sv.ends.slice();
+    return L.times.filter(x=>x!=null).length;
+  }
+  const map=alignLines(sv.texts,newT);
+  L.times=map.map(o=>o>=0 ? (sv.times[o] ?? null) : null);
+  L.ends=map.map(o=>o>=0 && Array.isArray(sv.ends) ? (sv.ends[o] ?? null) : null);
+  // keep order sane: drop any time that would run backwards
+  let last=-1; L.times=L.times.map(t=>{ if(t==null) return null; if(t<=last) return null; last=t; return t; });
+  return L.times.filter(x=>x!=null).length;
+}
+
 function addLyrics(name, txt){
   let items, lrcTimes=null;
   if(/\.lrc$/i.test(name)){ ({items, lrcTimes}=parseLrc(txt)); }
@@ -449,29 +545,29 @@ function addLyrics(name, txt){
   // a section with no lyric lines (e.g. "[SHORT INSTRUMENTAL]") names the break after the line before it
   let lastLine=-1;
   items.forEach(it=>{ if(it.type==="line") lastLine=it.idx; else if(it.type==="section" && secs[it.sec].first==null && lastLine>=0){ const nm=plainText(it.html).toLowerCase(); lines[lastLine].brkName=nm.charAt(0).toUpperCase()+nm.slice(1); } });
-  lyrics[name]={items, lines, secs, times:new Array(lines.length).fill(null), ends:new Array(lines.length).fill(null)};
-  const saved=store.get(timingKey(name), null);
-  const sv = Array.isArray(saved) ? {times:saved} : saved;
-  if(sv && Array.isArray(sv.times) && sv.times.length===lines.length){
-    lyrics[name].times=sv.times;
-    if(Array.isArray(sv.ends) && sv.ends.length===lines.length) lyrics[name].ends=sv.ends;
-  }
-  else if(lrcTimes) lyrics[name].times=lrcTimes;
+  const L={items, lines, secs, src:txt, times:new Array(lines.length).fill(null), ends:new Array(lines.length).fill(null)};
+  assignParts(L);
+  lyrics[name]=L;
+  // timing: new store (survives edits) → older per-line-count store → LRC stamps
+  let kept=restoreTiming(L, store.get(timingKey2(name), null));
+  if(!kept){ const legacy=store.get("phrasecue:t:"+name+":"+lines.length, null); kept=restoreTiming(L, Array.isArray(legacy)?{times:legacy}:legacy); }
+  if(!kept && lrcTimes) L.times=lrcTimes;
+  return kept;
 }
 
 function applyTimingFile(obj){
   if(!obj || !Array.isArray(obj.times)) return false;
   let target = obj.lyrics && lyrics[obj.lyrics] ? obj.lyrics : null;
   if(!target) target = Object.keys(lyrics).find(n => lyrics[n].lines.length===obj.times.length) || null;
-  if(!target || lyrics[target].lines.length!==obj.times.length){
+  if(!target){
     // remember for later in case lyrics are loaded afterwards
-    if(obj.lyrics) store.set("phrasecue:t:"+obj.lyrics+":"+obj.times.length, {times:obj.times, ends:obj.ends||null});
+    if(obj.lyrics) store.set(timingKey2(obj.lyrics), {times:obj.times, ends:obj.ends||null, texts:obj.texts||null});
     return false;
   }
   const LT=lyrics[target];
-  LT.times=obj.times.slice();
-  LT.ends = Array.isArray(obj.ends) && obj.ends.length===LT.lines.length ? obj.ends.slice() : new Array(LT.lines.length).fill(null);
-  store.set(timingKey(target), {times:LT.times, ends:LT.ends});
+  const kept=restoreTiming(LT, {times:obj.times, ends:obj.ends||null, texts:obj.texts||null});
+  if(!kept) return false;
+  saveTimingFor(target);
   if(typeof obj.lead==="number"){ lead=obj.lead; store.set("phrasecue:lead",lead); syncLeadUI(); }
   return target;
 }
@@ -533,7 +629,18 @@ function render(){
       const ts=document.createElement("span"); ts.className="ts"; d.prepend(ts);
       it.el=d; it.tsEl=ts;
     }
+    if((it.type==="line"||it.type==="backing") && it.part && L.partColor[it.part]){ d.classList.add("parted"); d.style.setProperty("--pc", L.partColor[it.part]); }
     frag.appendChild(d);
+    if(it.type==="title" && L.parts.length){
+      const lg=document.createElement("div"); lg.className="item legend";
+      lg.innerHTML=L.parts.map(p=>'<span><i style="--c:'+L.partColor[p]+'"></i>'+esc(p)+'</span>').join("");
+      frag.appendChild(lg);
+    }
+  }
+  if(L.parts.length && !L.items.some(i=>i.type==="title")){
+    const lg=document.createElement("div"); lg.className="item legend";
+    lg.innerHTML=L.parts.map(p=>'<span><i style="--c:'+L.partColor[p]+'"></i>'+esc(p)+'</span>').join("");
+    frag.prepend(lg);
   }
   st.appendChild(frag);
   const be=document.createElement("div"); be.className="brk"; be.id="brk"; st.appendChild(be);
@@ -751,7 +858,8 @@ function undoStamp(){
   seek(Math.max(0,(prev!=null?prev:now()-4)-0.5));
   saveLocal(); updateTsLabels(); updateTimedChip(); lastCur=-2;
 }
-function saveLocal(){ if(curName) store.set(timingKey(curName), {times:lyrics[curName].times, ends:lyrics[curName].ends}); }
+function saveTimingFor(name){ const L=lyrics[name]; if(L) store.set(timingKey2(name), {times:L.times, ends:L.ends, texts:L.lines.map(l=>normLine(l.html))}); }
+function saveLocal(){ if(curName) saveTimingFor(curName); }
 // Enter: the singing stops here (an instrumental break starts) after the last stamped / current line
 function markBreak(remove){
   const L=lyrics[curName]; if(!L) return;
@@ -808,7 +916,7 @@ const baseName = n => n.replace(/\.[^.]+$/,"");
 function saveTiming(){
   if(!curName) return;
   const L=lyrics[curName];
-  download(baseName(curName)+".timing.json", JSON.stringify({app:"phrasecue",version:2,lyrics:curName,lines:L.lines.length,lead,times:L.times,ends:L.ends},null,1),"application/json");
+  download(baseName(curName)+".timing.json", JSON.stringify({app:"phrasecue",version:3,lyrics:curName,lines:L.lines.length,lead,times:L.times,ends:L.ends,texts:L.lines.map(l=>normLine(l.html))},null,1),"application/json");
   toast("Saved — keep it next to the song files");
 }
 function exportLrc(){
@@ -1017,7 +1125,8 @@ function drawTL(){
     L.lines.forEach((ln,i)=>{
       const t=L.times[i]; if(t==null || t<va || t>vb) return;
       const x=t2x(t,w), active=i===cur, dragging=tl.drag && tl.drag.type==="marker" && tl.drag.i===i;
-      g.fillStyle = dragging ? "#7fb8ff" : active ? "#f2b84b" : "rgba(242,184,75,.55)";
+      const pc=partColor(L,i);
+      g.fillStyle = dragging ? "#7fb8ff" : active ? (pc||"#f2b84b") : (pc ? hexA(pc,.6) : "rgba(242,184,75,.55)");
       g.fillRect(x-(active||dragging?1:0.5),0,active||dragging?2:1,h-14);
       g.beginPath(); g.moveTo(x-4,0); g.lineTo(x+4,0); g.lineTo(x,6); g.closePath(); g.fill();
       if(x-lastLabelX>18){ g.fillStyle=active?"#ece8df":"#9a9cab"; g.font="10px system-ui,sans-serif"; g.fillText(String(i+1),x+3,16); lastLabelX=x; }
@@ -1316,15 +1425,17 @@ function drawVideoFrame(g, W, H, t){
   // previous line (faded), current (big), next (dim)
   const cr=runsOf(cur), ch=blockHeight(g,cr,big,maxW);
   y=H*0.46-ch/2+rise;
-  const sn=secName(cur); if(sn) center(sn.toUpperCase(), y-base*0.5, Math.round(base*0.36), "#f2b84b","700",0.85*ease);
+  const pcol=partColor(L,cur), showPart=pcol && (cur===0 || L.lines[cur-1].part!==L.lines[cur].part);
+  const sn=secName(cur); if(sn) center(sn.toUpperCase(), y-base*(showPart?0.95:0.5), Math.round(base*0.36), "#f2b84b","700",0.85*ease);
   if(cur>0 && !sn){ const pr=runsOf(cur-1), ph=blockHeight(g,pr,small,maxW); drawRunsBlock(g,pr,cx,y-ph-base*0.45,small,maxW,"#5f6270","#7a7d8c",0.6*ease); }
-  const hh=drawRunsBlock(g,cr,cx,y,big,maxW,"#ece8df","#f2b84b",0.35+0.65*ease);
+  if(showPart) center(L.lines[cur].part.toUpperCase(), y-base*0.5, Math.round(base*0.34), pcol, "700", 0.9*ease);
+  const hh=drawRunsBlock(g,cr,cx,y,big,maxW,pcol||"#ece8df","#f2b84b",0.35+0.65*ease);
   // progress under the current line
   const n=nextTimed(cur), a0=L.times[cur], b0=n>=0?L.times[n]:dur();
   const p=Math.min(1,Math.max(0,(ts-a0)/(b0-a0||1))), bw=Math.min(maxW, W*0.5);
   g.fillStyle="rgba(242,184,75,.18)"; g.fillRect(cx-bw/2,y+hh+base*0.25,bw,5); g.fillStyle="#f2b84b"; g.fillRect(cx-bw/2,y+hh+base*0.25,bw*p,5);
   if(n>=0){ const ns=secName(n); let yy=y+hh+base*0.8; if(ns){ center(ns.toUpperCase(), yy+base*0.3, Math.round(base*0.32),"#f2b84b","700",0.7); yy+=base*0.45; }
-    const nh=drawRunsBlock(g,runsOf(n),cx,yy,small,maxW,"#9a9cab","#c9cbd6",0.8);
+    const npc=partColor(L,n); const nh=drawRunsBlock(g,runsOf(n),cx,yy,small,maxW,npc?hexA(npc,.75):"#9a9cab",npc?hexA(npc,.9):"#c9cbd6",0.8);
     const n2=nextTimed(n); if(n2>=0 && !secName(n2) && o.shape!=="landscape") drawRunsBlock(g,runsOf(n2),cx,yy+nh+base*0.2,small,maxW,"#5f6270","#7a7d8c",0.6); }
   drawProgress(g,W,H,t);
 }
@@ -1480,6 +1591,56 @@ $("btnTakes").onclick=()=>{ renderTakes(); $("takes").classList.toggle("show"); 
 function updateAutoBrkUI(){ $("btnAutoBrk").textContent="♪ Estimate breaks: "+(autoBrk?"on":"off"); }
 $("btnAutoBrk").onclick=()=>{ autoBrk=!autoBrk; store.set("phrasecue:autobrk",autoBrk); updateAutoBrkUI(); lastCur=-2; };
 updateAutoBrkUI();
+// ---------- 📝 lyrics editor ----------
+const PASTED_KEY="phrasecue:pasted";
+function pastedAll(){ return store.get(PASTED_KEY, {}) || {}; }
+function describeLyrics(txt){
+  if(!txt.trim()) return "Empty: paste or type some lyrics.";
+  const fmtName = isPhrasing(txt) ? "vocal phrasing" : isSuno(txt) ? "Suno-style tags" : "plain lyrics";
+  const tmp={}; const saved=lyrics; lyrics=tmp; try{ addLyrics("__probe__", txt); }finally{ lyrics=saved; }
+  const L=tmp["__probe__"]; store.set(timingKey2("__probe__"), null);
+  return "Detected: "+fmtName+" · "+L.lines.length+" lines · "+L.secs.length+" sections"+(L.parts.length?" · parts: "+L.parts.join(", "):"");
+}
+function openLyricsEditor(fresh){
+  const L = !fresh && curName ? lyrics[curName] : null;
+  $("leName").value = L ? curName : "";
+  $("leText").value = L ? (L.src||"") : "";
+  $("leInfo").textContent = describeLyrics($("leText").value);
+  $("lyed").classList.add("show");
+  setTimeout(()=>$(L?"leText":"leName").focus(),50);
+}
+function useEditedLyrics(){
+  const txt=$("leText").value; let name=$("leName").value.trim();
+  if(!txt.trim()){ toast("Paste or type some lyrics first"); return; }
+  if(!name){ name="Pasted lyrics"; }
+  if(/\.lrc$/i.test(name)===false && /\.(txt|md)$/i.test(name)===false && lyrics[name+".txt"]) name=name+".txt";
+  const had = lyrics[name] ? lyrics[name].times.filter(x=>x!=null).length : 0;
+  if(lyrics[name]) saveTimingFor(name);           // make sure the latest timing is stored before re-reading
+  const kept=addLyrics(name, txt);
+  const all=pastedAll(); all[name]={text:txt, updated:Date.now()}; store.set(PASTED_KEY, all);
+  saveTimingFor(name);
+  refreshLyricSelect(name);
+  $("lyed").classList.remove("show");
+  const L=lyrics[name];
+  toast(had ? "Updated "+name+" · kept timing for "+kept+" of "+L.lines.length+" lines" : "Using "+name+" · "+L.lines.length+" lines");
+  if((hasV||hasI)) $("drop").classList.add("hidden");
+}
+function restorePasted(){
+  const all=pastedAll(); const names=Object.keys(all);
+  names.forEach(n=>{ if(all[n] && typeof all[n].text==="string") addLyrics(n, all[n].text); });
+  if(names.length) refreshLyricSelect();
+}
+$("btnLyrics").onclick=()=>openLyricsEditor(false);
+$("dropPaste").onclick=e=>{ e.preventDefault(); openLyricsEditor(true); };
+$("leText").addEventListener("input",()=>{ clearTimeout(openLyricsEditor._t); openLyricsEditor._t=setTimeout(()=>{ $("leInfo").textContent=describeLyrics($("leText").value); },250); });
+$("leUse").onclick=useEditedLyrics;
+$("leClose").onclick=()=>$("lyed").classList.remove("show");
+$("leNew").onclick=()=>{ $("leName").value=""; $("leText").value=""; $("leInfo").textContent=describeLyrics(""); $("leName").focus(); };
+$("leDownload").onclick=()=>{ const n=($("leName").value.trim()||"lyrics").replace(/[\\/:*?"<>|]+/g,"-"); download(/\.(txt|md|lrc)$/i.test(n)?n:n+".txt", $("leText").value, "text/plain"); };
+$("leDelete").onclick=()=>{ const n=$("leName").value.trim(); const all=pastedAll(); if(all[n]){ delete all[n]; store.set(PASTED_KEY, all); toast("Forgot the saved copy of "+n+" (still open for now)"); } else toast("No saved copy named "+(n||"that")); };
+$("lyed").addEventListener("click",e=>{ if(e.target.id==="lyed") $("lyed").classList.remove("show"); });
+restorePasted();
+
 $("btnVideo").onclick=openVideoPanel;
 $("vxClose").onclick=()=>{ if(vx.active && !confirm("Stop recording the video?")) return; stopVideo(true); $("video").classList.remove("show"); };
 $("vxCancel").onclick=()=>stopVideo(true);
@@ -1503,7 +1664,8 @@ window.addEventListener("resize",()=>drawTL());
 document.addEventListener("mouseup",e=>{ const b=e.target.closest && e.target.closest("button,summary"); if(b) setTimeout(()=>b.blur(),0); });
 
 document.addEventListener("keydown",e=>{
-  if(e.target.tagName==="SELECT" || (e.target.tagName==="INPUT" && e.target.type!=="range" && e.target.type!=="checkbox")) return;
+  if($("lyed").classList.contains("show")){ if(e.key==="Escape") $("lyed").classList.remove("show"); else if(e.key==="Enter" && (e.ctrlKey||e.metaKey)){ e.preventDefault(); useEditedLyrics(); } return; }
+  if(e.target.tagName==="SELECT" || e.target.tagName==="TEXTAREA" || (e.target.tagName==="INPUT" && e.target.type!=="range" && e.target.type!=="checkbox")) return;
   if(e.ctrlKey||e.metaKey||e.altKey) return;
   const k=e.key;
   if($("video").classList.contains("show")){ if(k==="Escape" && !vx.active) $("video").classList.remove("show"); return; }

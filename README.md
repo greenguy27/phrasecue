@@ -95,6 +95,14 @@ PhraseCue reads these the way they're written for Suno:
 - **Backing lines:** a whole line in `( )` shows smaller and isn't timed. A `(word)` inside a lyric line is shown dimmer.
 - **Title:** a short first line followed by a blank line becomes the title. If there isn't one, the file name is used.
 
+### Duets / parts
+Lines are colored by singer. A small color key appears under the title, the timeline markers match, and exported videos show the singer's name whenever it changes. The part is set by:
+- **Directions:** `[Male vocal]`, `[Female vocal]`, `[Both vocals]` (also *duet*, *choir*, *together*), in any lyrics format
+- **Named parts:** `[Part: Lila]`, or a bracket tag that's just a name, like `[Elyra]`
+- **Line prefix:** `Wren: I left the light on…`. The name is removed from the sung text.
+
+A part lasts until the next one is set. Songs with only one singer aren't colored.
+
 ### LRC
 Standard `[mm:ss.xx] lyric` files load already timed.
 
@@ -105,6 +113,13 @@ During an instrumental break, the last line dims and a **♪ Instrumental** bar 
 - **Exact breaks:** while timing, press `Enter` the moment the singing stops, then keep tapping `Space` when it comes back. `Backspace` undoes the mark, `Shift`+`Enter` removes it, and on the timeline you can drag the blue break marker.
 - A section in your phrasing file with no lyric lines, like `## [SHORT INSTRUMENTAL]`, gives the break its name.
 - Breaks are saved in the timing file, and exported to `.lrc` as an empty timestamp, which is the standard way to show "no lyrics here".
+
+## Pasting and editing lyrics
+
+**📝 Lyrics** (or *paste / type your lyrics* on the welcome screen) opens a text box. Paste or type lyrics in any supported format, give them a name, and click **Use these lyrics** (`Ctrl`+`Enter`).
+- Pasted lyrics are saved in your browser and show up in the lyrics menu next time. **⬇ Download .txt** saves a file copy.
+- Opening the box again edits the current lyrics. **Edits keep your timing**: lines are matched by their text, so fixed typos, added lines and removed lines only affect the lines you touched. New lines just need tapping.
+- If you load a lyrics *file* with the same name, the file's text is used, with your timing carried over the same way.
 
 ## Lyric & karaoke videos
 
