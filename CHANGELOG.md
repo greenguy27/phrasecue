@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.4.0 (in testing)
+## 1.4.0 (2026-10-23)
 - **Lyrics-only mode:** read and step through lyrics before the MP3 exists ("Continue without audio"); playback, timing and video wait for audio
 - **Duet layout:** singer A left, singer B right, both centered (app + videos, switchable); video option to show singer names above every line, on change, or off (names are labels, never timed)
 - **Asks which MP3 is the karaoke version** when the file names don't say (no more silent guessing)
