@@ -4,7 +4,9 @@
 
 Load your song's full mix, its instrumental and your lyrics. Tap once through the song to time it, then sing along to the instrumental while each line lights up on cue. Stress marks, pitch arrows, breath marks and performance notes are all shown in place.
 
-![PhraseCue screenshot](docs/screenshot.png)
+![PhraseCue singing view: cover art beside the lyrics, current line highlighted, timeline and controls below](docs/screenshot.png)
+
+*More pictures: [Screenshots](#screenshots)*
 
 **▶ Try it:** https://greenguy27.github.io/phrasecue/
 
@@ -22,6 +24,24 @@ Load your song's full mix, its instrumental and your lyrics. Tap once through th
 - **Timeline.** See the vocal and every line's start under the lyrics. Drag a marker to retime a line, scroll to zoom.
 - **Snap (auto-timing assist).** With both mixes loaded, PhraseCue isolates the lead vocal (full mix minus instrumental) and nudges your taps onto the real vocal starts.
 - **Record yourself.** Sing over the instrumental, play the take back in sync, and download your voice or a voice-plus-instrumental WAV.
+- **Duets.** Lines are colored by singer, with singer A on the left, singer B on the right and **Both** lines centered.
+- **Paste or write lyrics in the app.** Includes one-click tag buttons for Suno-style sections, breaks and vocals. Editing keeps your timing.
+- **Lyric & karaoke videos.** Export landscape, vertical or square videos, including a bold poster style for TikTok, Shorts and Reels.
+- **Cover art & share cards.** Add a cover, and the stage takes on its colors. Turn any line into a PNG card for posts or stories.
+- **No MP3 yet?** Read and step through lyrics while the song is still being made.
+
+## Screenshots
+
+| | |
+|---|---|
+| ![Duet: male lines on the left, female on the right, both centered](docs/screens/duet.png)<br>**Duets:** each singer has their own color and side | ![Time mode: the line to tap is highlighted in blue](docs/screens/time-mode.png)<br>**⏱ Time mode:** tap Space as each blue line starts |
+| ![Lyrics editor with grouped tag buttons](docs/screens/lyrics-editor.png)<br>**📝 Lyrics editor:** song title, version and one-click tags | ![Welcome screen with the loading checklist](docs/screens/welcome.png)<br>**Welcome screen:** a checklist shows what's still missing |
+| ![Export video panel](docs/screens/video-export.png)<br>**🎬 Video export:** shape, style, duet layout and singer names | ![Share a line panel with a square card](docs/screens/share-a-line.png)<br>**Share a line:** a PNG card made from your cover art |
+
+![Three vertical video frames: dark duet, orange poster, blue poster](docs/screens/video-frames.png)
+*Vertical video frames: dark style with the duet layout, then two poster colors.*
+
+The pictures use the sample song [`examples/example-suno-duet.txt`](examples/example-suno-duet.txt) ("Lantern Road") and [`examples/example-phrasing.txt`](examples/example-phrasing.txt) ("Paper Boats").
 
 ## Quick start
 
@@ -30,11 +50,13 @@ Load your song's full mix, its instrumental and your lyrics. Tap once through th
    - the **full mix** audio (MP3, WAV, M4A, OGG, FLAC)
    - the **instrumental**. If its name contains *karaoke*, *instrumental*, *without*, *backing*, *minus* or *no vocal*, it's detected automatically. Otherwise PhraseCue asks which file has no vocals.
    - one or more **lyrics** files (`.txt`, `.md` or `.lrc`)
-3. **Time it, once per lyrics file:** press **S**, then **Space** to start the song, then tap **Space** the moment the singer starts each **blue** line. With both mixes loaded, **🧲 Snap** tightens your taps automatically.
-4. **Sing:** press **S** to leave timing mode, **V** for the instrumental, then **Space** to play.
+3. **Time it, once per lyrics file:** click **⏱ Time** (or press **S**), then **Space** to start the song, then tap **Space** the moment the singer starts each **blue** line. With both mixes loaded, **🧲 Snap** tightens your taps automatically.
+4. **Sing:** click **🎤 Sing** (or press **S**), choose **Karaoke** for the instrumental (or press **V**), then **Space** to play.
 5. **Keep it:** use **Timing ▾ → 💾 Save timing file** and keep the `.timing.json` file next to your song. Next time, or on another computer, drag it in with the other files.
 
-Want to see the lyric formats? Load the files in [`examples/`](examples/) along with any audio file.
+No lyrics file? Click **📝 Lyrics** to paste or type them. The welcome checklist shows what's loaded and what's still missing.
+
+Want to see the lyric formats? Load the files in [`examples/`](examples/) along with any audio file. `example-suno-duet.txt` shows Suno-style tags and a duet.
 
 ## Lyric file formats
 
@@ -88,8 +110,8 @@ Second line (echo)
 ...
 ```
 PhraseCue reads these the way they're written for Suno:
-- **Sections:** `[Verse 1]`, `[Chorus]`, `[Bridge]` and so on become section headers.
-- **Breaks:** `[Instrumental Break]` or `[Guitar Solo]` with no lyrics under it names the instrumental break.
+- **Sections:** `[Intro]`, `[Verse 1]`, `[Pre-Chorus]`, `[Chorus]`, `[Post-Chorus]`, `[Hook]`, `[Bridge]`, `[Final Chorus]`, `[Outro]` and so on become section headers.
+- **Breaks:** a tag with no lyrics under it, like `[Instrumental Break]`, `[Interlude]`, `[Guitar Solo]`, `[Breakdown]`, or variations like `[Short Instrumental]` and `[Soft Guitar Solo]`, names the instrumental break.
 - **Directions:** tags like `[Male vocal, soft]` show as performance notes, and a combined tag like `[Chorus, both vocals]` gives a header plus a note.
 - **Style lines:** `[Style: …]` shows as a small line under the title.
 - **Backing lines:** a whole line in `( )` shows smaller and isn't timed. A `(word)` inside a lyric line is shown dimmer.
@@ -120,7 +142,14 @@ During an instrumental break, the last line dims and a **♪ Instrumental** bar 
 
 ## Pasting and editing lyrics
 
-**📝 Lyrics** (or *paste / type your lyrics* on the welcome screen) opens a text box. Paste or type lyrics in any supported format, give them a name, and click **Use these lyrics** (`Ctrl`+`Enter`).
+**📝 Lyrics** (or *paste / type your lyrics* on the welcome screen) opens a text box. Paste or type lyrics in any supported format, fill in the **Song title** (and an optional **Version**, like *Phrasing* or *Duet*), and click **Use these lyrics** (`Ctrl`+`Enter`).
+- **Tag buttons** insert tags at the cursor, in four groups:
+  - **Sections:** [Intro] [Verse #] [Pre-Chorus] [Chorus] [Post-Chorus] [Hook] [Bridge] [Final Chorus] [Outro]
+  - **Breaks:** [Instrumental Break] [Interlude] [Guitar Solo] [Breakdown]
+  - **Voices:** [Male vocal, …] [Female vocal, …] [Both vocals, …] [Part: name]
+  - **Marks:** [Style: …] ( backing ) // breath \*\*stress\*\*
+- **Smart numbering:** [Verse #] inserts the next verse number, and [Pre-Chorus] is numbered from the second one. Vocal tags leave the cursor inside so you can type details like *low and intimate*.
+- The line under the box shows the format, line, section and singer counts, and how many lines keep their timing.
 - Pasted lyrics are saved in your browser and show up in the lyrics menu next time. **⬇ Download .txt** saves a file copy.
 - Opening the box again edits the current lyrics. **Edits keep your timing**: lines are matched by their text, so fixed typos, added lines and removed lines only affect the lines you touched. New lines just need tapping.
 - **No MP3 yet?** You can still paste and read lyrics. Choose **Continue without audio** on the welcome screen, or just click **Use these lyrics**, then step through the lines with `↑` / `↓` or by clicking them. Load the MP3s whenever they're ready to time the song.
@@ -149,7 +178,7 @@ During an instrumental break, the last line dims and a **♪ Instrumental** bar 
 
 ## Layout at a glance
 
-- **Top bar:** lyrics menu · timed status · 📂 Load · 📝 Lyrics · **🎤 Sing | ⏱ Time** · **Vocals | Karaoke** · Timing ▾ · 🎬 Video · **⋯** (loaded files, text size, full screen, undo, help, About)
+- **Top bar:** lyrics menu · timed status · 📂 Load · 📝 Lyrics · **🎤 Sing | ⏱ Time** · **Vocals | Karaoke** · Timing ▾ · 🎬 Video · Share · **⋯** (loaded files, text size, full screen, undo, help, About)
 - **Undo:** clearing timing, moving lines (keys or timeline drag), removing break marks and editing lyrics can all be undone, with **Undo** on the pop-up, `Ctrl`+`Z`, or ⋯ → Undo.
 - **Welcome checklist:** shows what's loaded and what's still missing: Lyrics · Full mix · Instrumental (optional) · Timed.
 

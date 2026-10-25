@@ -1,5 +1,9 @@
 # Changelog
 
+## Docs (2026-10-25)
+- README: new main screenshot, a Screenshots gallery (duet, Time mode, lyrics editor, welcome, video export, share card, video frames), updated feature list, Quick start and tag lists
+- New example: `examples/example-suno-duet.txt` (Suno-style tags and a duet)
+
 ## 1.5.1 (2026-10-25)
 - **Lyrics editor tag buttons, complete and grouped** (Sections · Breaks · Voices · Marks): adds [Intro], [Final Chorus], [Post-Chorus], [Hook], [Interlude], [Guitar Solo], [Breakdown], [Part: name], [Style: …] and ( backing )
 - **Smart numbering:** [Verse #] inserts the next verse number; [Pre-Chorus] numbers from the second one
