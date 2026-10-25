@@ -1,6 +1,12 @@
 # Changelog
 
 ## 1.5.0 (in testing)
+- **Cover art & tinted stage:** add a cover image per song (click the cover, ⋯ → Cover art, or drop an image); the lyrics stage takes on its colors
+- **Song panel:** cover, title, details and singer key beside the lyrics on wide screens
+- **Lyric view:** current line larger, past lines softly blurred, singer names above each change of singer; round play button with elapsed / total time
+- **Lyrics editor:** separate Song title and Version fields; one-click tags ([Verse], [Chorus], [Instrumental Break], [Male/Female/Both vocal], // breath, **stress**); live counts and a "timing kept" preview
+- **Share a line:** turn any line into a 1080×1080 or 1080×1920 PNG card with the song's cover or a moonlit background, glow color, credit line and editable text
+- **Poster video style:** bold solid-color backgrounds with heavy type for vertical videos (six colors)
 - **Clearer controls:** 🎤 Sing | ⏱ Time and Vocals | Karaoke switches replace the toggle buttons, so the current state is always visible
 - **Tidier top bar:** one row; loaded files, text size, full screen, undo, help and About moved into a **⋯** menu
 - **Undo:** pop-up with Undo (and `Ctrl+Z`) for clearing timing, moving lines, timeline drags, removing break marks and lyrics edits; no more "are you sure?" dialog

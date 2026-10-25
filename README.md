@@ -153,6 +153,12 @@ During an instrumental break, the last line dims and a **♪ Instrumental** bar 
 - **Undo:** clearing timing, moving lines (keys or timeline drag), removing break marks and editing lyrics can all be undone, with **Undo** on the pop-up, `Ctrl`+`Z`, or ⋯ → Undo.
 - **Welcome checklist:** shows what's loaded and what's still missing: Lyrics · Full mix · Instrumental (optional) · Timed.
 
+## Cover art and sharing
+
+- **Cover art:** click the cover square beside the lyrics (or ⋯ → 🖼 Cover art…, or drop an image with your files). The lyrics stage picks up its colors, and share cards use it. It's saved in your browser per song.
+- **Share a line:** the **Share** button turns any lyric line into a picture: square 1080×1080 for posts or 1080×1920 for stories, with your cover art or a moonlit background, a glow color, a credit line and the "Made with PhraseCue" tag. You can edit the text first, for example to drop stress capitals from a phrasing file. It downloads as a PNG.
+- **Poster style for videos:** in 🎬 Video, set **Style → Poster** for a bold solid-color background with heavy type, made for vertical TikTok, Shorts and Reels clips.
+
 ## Keyboard shortcuts
 
 | Key | Action |

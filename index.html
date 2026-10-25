@@ -365,6 +365,7 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
     <tr><td><kbd>,</kbd> <kbd>.</kbd></td><td>Slower / faster (pitch stays the same)</td></tr>
     <tr><td><kbd>R</kbd></td><td>Record yourself / stop</td></tr>
     <tr><td><kbd>T</kbd></td><td>Show your takes</td></tr>
+    <tr><td>Share</td><td>Turn any line into a picture card (square or story) to post. Click the cover square to add cover art; the stage takes on its colors</td></tr>
     <tr><td>No MP3 yet?</td><td>Paste lyrics and choose <b>Continue without audio</b>: read and step through them with <kbd>↑</kbd> <kbd>↓</kbd>, then load the MP3 later</td></tr>
     <tr><td>📝 Lyrics</td><td>Paste, type or edit lyrics (plain, phrasing or Suno-style). <kbd>Ctrl</kbd>+<kbd>Enter</kbd> uses them. Edits keep the timing of unchanged lines</td></tr>
     <tr><td>Duets</td><td><code>[Male vocal]</code>, <code>[Female vocal]</code>, <code>[Both vocals]</code>, <code>[Part: Name]</code> or a <code>Name:</code> line prefix color the lines by singer. Side-by-side layout (A left, B right, both centered) can be switched in Timing ▾</td></tr>
@@ -415,6 +416,8 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
     <label>Darken image <input type="range" id="vxDim" min="0.2" max="0.9" step="0.05" value="0.6"></label>
     <label>Credit line <input type="text" id="vxCredit" placeholder="e.g. artist name · crbooks.ink" maxlength="80"></label>
     <label class="chk"><input type="checkbox" id="vxTitle" checked> Title card at the start and end</label>
+    <label>Style <select id="vxStyle"><option value="dark">Dark stage (background image optional)</option><option value="poster">Poster: bold solid color</option></select></label>
+    <label>Poster color <select id="vxPoster"><option value="#e8613a">Ember orange</option><option value="#2f6fde">Electric blue</option><option value="#7a3fd1">Violet</option><option value="#1f8a6a">Pine green</option><option value="#c2185b">Crimson</option><option value="#111111">Black</option></select></label>
     <label>Duet layout <select id="vxDuet"><option value="side">Side by side: A left, B right, both centered</option><option value="stacked">Stacked: all lines centered</option></select></label>
     <label>Singer names <select id="vxNames"><option value="every">Above every line</option><option value="change">Only when the singer changes</option><option value="off">Off (colors only)</option></select></label>
     <label class="chk"><input type="checkbox" id="vxClean"> Hide phrasing marks (arrows, slashes, dashes, bold)</label>
@@ -1648,7 +1651,7 @@ function lineRuns(html, clean){
 function wrapRuns(g, runs, size, maxW){
   const words=[];
   runs.forEach(r=>{ r.t.split(/(\s+)/).forEach(w=>{ if(w==="") return; words.push({t:w, bold:r.bold, sp:/^\s+$/.test(w)}); }); });
-  const font=b=>(b?"800 ":"500 ")+size+"px system-ui,-apple-system,'Segoe UI',Roboto,sans-serif";
+  const P=vxPalette(vx.opts), font=b=>(b?P.wB:P.wN)+" "+size+"px system-ui,-apple-system,'Segoe UI',Roboto,sans-serif";
   const lines=[[]]; let w=0;
   for(const wd of words){
     g.font=font(wd.bold); const ww=g.measureText(wd.t).width;
@@ -1662,28 +1665,37 @@ function wrapRuns(g, runs, size, maxW){
   }
   return lines.map(L=>{ while(L.length && L[L.length-1].sp) L.pop(); return {parts:L, width:L.reduce((s,p)=>s+p.w,0)}; }).filter(l=>l.parts.length);
 }
+// colors for the two video styles (dark stage, or poster: one bold color with light ink)
+function vxPalette(o){
+  if(o && o.style==="poster"){ const ink="#fff7ec";
+    return {poster:true, bg:o.poster, gold:ink, blue:ink, fg:ink, prev:"rgba(255,247,236,.45)", prevB:"rgba(255,247,236,.55)", next:"rgba(255,247,236,.72)", nextB:"rgba(255,247,236,.85)",
+            barBg:"rgba(255,247,236,.28)", bar:ink, track:"rgba(255,255,255,.2)", trackFill:"rgba(255,247,236,.85)", mark:ink, wN:"800", wB:"900", part:false}; }
+  return {poster:false, gold:"#f2b84b", blue:"#7fb8ff", fg:"#ece8df", prev:"#5f6270", prevB:"#7a7d8c", next:"#9a9cab", nextB:"#c9cbd6",
+          barBg:"rgba(242,184,75,.18)", bar:"#f2b84b", track:"rgba(255,255,255,.08)", trackFill:"rgba(242,184,75,.7)", mark:"#ece8df", wN:"500", wB:"800", part:true};
+}
 function drawRunsBlock(g, runs, cx, y, size, maxW, color, boldColor, alpha, align, ax){
   const lines=wrapRuns(g,runs,size,maxW), lh=size*1.22;
   g.globalAlpha=alpha; g.textBaseline="alphabetic";
   lines.forEach((ln,k)=>{
     let x = align==="left" ? ax : align==="right" ? ax-ln.width : cx-ln.width/2; const yy=y+k*lh+size*0.85;
-    ln.parts.forEach(p=>{ g.font=(p.bold?"800 ":"500 ")+size+"px system-ui,-apple-system,'Segoe UI',Roboto,sans-serif"; g.fillStyle=p.bold?boldColor:color; g.fillText(p.t,x,yy); x+=p.w; });
+    const P=vxPalette(vx.opts); ln.parts.forEach(p=>{ g.font=(p.bold?P.wB:P.wN)+" "+size+"px system-ui,-apple-system,'Segoe UI',Roboto,sans-serif"; g.fillStyle=p.bold?boldColor:color; g.fillText(p.t,x,yy); x+=p.w; });
   });
   g.globalAlpha=1;
   return lines.length*lh;
 }
 function blockHeight(g, runs, size, maxW){ return wrapRuns(g,runs,size,maxW).length*size*1.22; }
 function drawVideoFrame(g, W, H, t){
-  const o=vx.opts, L=lyrics[curName];
+  const o=vx.opts, L=lyrics[curName], C=vxPalette(o);
   // background
-  if(vx.bg){
+  if(C.poster){ g.fillStyle=C.bg; g.fillRect(0,0,W,H); }
+  else if(vx.bg){
     const im=vx.bg, s=Math.max(W/im.width, H/im.height), iw=im.width*s, ih=im.height*s;
     g.drawImage(im,(W-iw)/2,(H-ih)/2,iw,ih);
     g.fillStyle="rgba(8,9,12,"+o.dim+")"; g.fillRect(0,0,W,H);
   } else {
     const gr=g.createLinearGradient(0,0,0,H); gr.addColorStop(0,"#15161d"); gr.addColorStop(1,"#0a0b0f"); g.fillStyle=gr; g.fillRect(0,0,W,H);
   }
-  const vg=g.createRadialGradient(W/2,H/2,Math.min(W,H)*0.35,W/2,H/2,Math.max(W,H)*0.75); vg.addColorStop(0,"rgba(0,0,0,0)"); vg.addColorStop(1,"rgba(0,0,0,.45)"); g.fillStyle=vg; g.fillRect(0,0,W,H);
+  const vg=g.createRadialGradient(W/2,H/2,Math.min(W,H)*0.35,W/2,H/2,Math.max(W,H)*0.75); vg.addColorStop(0,"rgba(0,0,0,0)"); vg.addColorStop(1,C.poster?"rgba(0,0,0,.18)":"rgba(0,0,0,.45)"); g.fillStyle=vg; g.fillRect(0,0,W,H);
   const base=Math.round(Math.min(W,H)*(o.shape==="vertical"?0.078:0.07)), maxW=W*0.84, cx=W/2;
   g.textAlign="left";
   const title=L.items.find(i=>i.type==="title"), titleText=title?plainText(title.html).replace(/^#+\s*/,""):songBase();
@@ -1694,8 +1706,8 @@ function drawVideoFrame(g, W, H, t){
   // title card before the first line
   if(cur<0){
     const left=(firstT??0)-ts, a=Math.min(1,Math.max(0,(t-vx.a)/0.8));
-    if(o.titleCard){ center(titleText.toUpperCase(), H*0.46, Math.round(base*1.25), "#f2b84b", "800", a); if(o.credit) center(o.credit, H*0.46+base*1.1, Math.round(base*0.55), "#ece8df", "500", a*0.85); }
-    if(firstT!=null && left>0 && left<=4){ center("♪  "+Math.ceil(left), H*(o.titleCard?0.72:0.5), Math.round(base*0.8), "#7fb8ff", "700", 0.9); }
+    if(o.titleCard){ center(titleText.toUpperCase(), H*0.46, Math.round(base*1.25), C.gold, "800", a); if(o.credit) center(o.credit, H*0.46+base*1.1, Math.round(base*0.55), C.fg, "500", a*0.85); }
+    if(firstT!=null && left>0 && left<=4){ center("♪  "+Math.ceil(left), H*(o.titleCard?0.72:0.5), Math.round(base*0.8), C.blue, "700", 0.9); }
     drawProgress(g,W,H,t); return;
   }
   // smooth transition when the current line changes
@@ -1709,16 +1721,16 @@ function drawVideoFrame(g, W, H, t){
   if(brk){
     const left=Math.max(0,brk.end-ts), p=Math.min(1,(ts-brk.start)/(brk.end-brk.start));
     y=H*0.4;
-    center("♪ "+breakName(cur,brk), y+rise, Math.round(base*0.8), "#7fb8ff", "700", ease);
+    center("♪ "+breakName(cur,brk), y+rise, Math.round(base*0.8), C.blue, "700", ease);
     if(!brk.last){
-      const bw=W*0.36; g.globalAlpha=ease; g.fillStyle="rgba(127,184,255,.25)"; g.fillRect(cx-bw/2,y+base*0.55,bw,6); g.fillStyle="#7fb8ff"; g.fillRect(cx-bw/2,y+base*0.55,bw*(1-p),6); g.globalAlpha=1;
+      const bw=W*0.36; g.globalAlpha=ease; g.fillStyle=C.poster?C.barBg:"rgba(127,184,255,.25)"; g.fillRect(cx-bw/2,y+base*0.55,bw,6); g.fillStyle=C.blue; g.fillRect(cx-bw/2,y+base*0.55,bw*(1-p),6); g.globalAlpha=1;
       const n=nextTimed(cur);
-      if(n>=0){ if(left<=3.5) center(String(Math.ceil(left)), y-base*1.1, Math.round(base*0.9), "#f2b84b","800",0.95);
-        const sn=secName(n); let yy=H*0.6; if(sn){ center(sn.toUpperCase(), yy, Math.round(base*0.36), "#f2b84b","700",0.8); yy+=base*0.3; }
-        drawRunsBlock(g, runsOf(n), cx, yy, small, maxW, "#9a9cab", "#c9cbd6", 0.75); }
+      if(n>=0){ if(left<=3.5) center(String(Math.ceil(left)), y-base*1.1, Math.round(base*0.9), C.gold,"800",0.95);
+        const sn=secName(n); let yy=H*0.6; if(sn){ center(sn.toUpperCase(), yy, Math.round(base*0.36), C.gold,"700",0.8); yy+=base*0.3; }
+        drawRunsBlock(g, runsOf(n), cx, yy, small, maxW, C.next, C.nextB, 0.75); }
     } else {
-      if(o.titleCard){ center(titleText.toUpperCase(), y+base*1.8, Math.round(base*0.7), "#f2b84b","800",ease*0.9); if(o.credit) center(o.credit, y+base*2.5, Math.round(base*0.45), "#ece8df","500",ease*0.8); }
-      if(o.mark) center("Made with PhraseCue · free at greenguy27.github.io/phrasecue", H*0.86, Math.round(base*0.34), "#9a9cab","500",ease*0.85);
+      if(o.titleCard){ center(titleText.toUpperCase(), y+base*1.8, Math.round(base*0.7), C.gold,"800",ease*0.9); if(o.credit) center(o.credit, y+base*2.5, Math.round(base*0.45), C.fg,"500",ease*0.8); }
+      if(o.mark) center("Made with PhraseCue · free at greenguy27.github.io/phrasecue", H*0.86, Math.round(base*0.34), C.next,"500",ease*0.85);
     }
     drawProgress(g,W,H,t); return;
   }
@@ -1728,42 +1740,43 @@ function drawVideoFrame(g, W, H, t){
   const place=i=>{ const sd=sideOf(L,i,duetOn); return sd==="center" ? {al:"center", ax:cx, mw:maxW} : {al:sd, ax: sd==="left" ? W*0.07 : W*0.93, mw:W*sideW}; };
   const label=(txt,yy,col,pl,alpha)=>{ g.globalAlpha=alpha; g.font="700 "+Math.round(base*0.34)+"px system-ui,-apple-system,'Segoe UI',Roboto,sans-serif"; g.fillStyle=col;
     g.textAlign = pl.al==="left"?"left":pl.al==="right"?"right":"center"; g.fillText(txt, pl.al==="center"?cx:pl.ax, yy); g.textAlign="left"; g.globalAlpha=1; };
-  const nameFor=(i,isCur)=>{ const pc=partColor(L,i); if(!pc || o.names==="off") return null;
+  const PC=i=>C.part ? partColor(L,i) : (partColor(L,i) ? C.fg : null);
+  const nameFor=(i,isCur)=>{ const pc=PC(i); if(!pc || o.names==="off") return null;
     if(o.names==="every") return pc; return (isCur && (i===0 || L.lines[i-1].part!==L.lines[i].part)) ? pc : null; };
   const pcur=place(cur), cr=runsOf(cur), ch=blockHeight(g,cr,big,pcur.mw);
   y=H*0.46-ch/2+rise;
-  const pcol=partColor(L,cur), curNm=nameFor(cur,true);
-  const sn=secName(cur); if(sn) center(sn.toUpperCase(), y-base*(curNm?0.95:0.5), Math.round(base*0.36), "#f2b84b","700",0.85*ease);
-  if(cur>0 && !sn){ const pp=place(cur-1), pr=runsOf(cur-1), ph=blockHeight(g,pr,small,pp.mw); drawRunsBlock(g,pr,cx,y-ph-base*(curNm?0.75:0.45),small,pp.mw,"#5f6270","#7a7d8c",0.6*ease,pp.al,pp.ax); }
+  const pcol=C.part ? partColor(L,cur) : null, curNm=nameFor(cur,true);
+  const sn=secName(cur); if(sn) center(sn.toUpperCase(), y-base*(curNm?0.95:0.5), Math.round(base*0.36), C.gold,"700",0.85*ease);
+  if(cur>0 && !sn){ const pp=place(cur-1), pr=runsOf(cur-1), ph=blockHeight(g,pr,small,pp.mw); drawRunsBlock(g,pr,cx,y-ph-base*(curNm?0.75:0.45),small,pp.mw,C.prev,C.prevB,0.6*ease,pp.al,pp.ax); }
   if(curNm) label(L.lines[cur].part.toUpperCase(), y-base*0.18, curNm, pcur, 0.92*ease);
-  const hh=drawRunsBlock(g,cr,cx,y,big,pcur.mw,pcol||"#ece8df","#f2b84b",0.35+0.65*ease,pcur.al,pcur.ax);
+  const hh=drawRunsBlock(g,cr,cx,y,big,pcur.mw,pcol||C.fg,C.gold,0.35+0.65*ease,pcur.al,pcur.ax);
   // progress under the current line (follows the line's side)
   const n=nextTimed(cur), a0=L.times[cur], b0=n>=0?L.times[n]:dur();
   const p=Math.min(1,Math.max(0,(ts-a0)/(b0-a0||1))), bw=Math.min(pcur.mw, W*0.5);
   const bx = pcur.al==="left" ? pcur.ax : pcur.al==="right" ? pcur.ax-bw : cx-bw/2;
-  g.fillStyle="rgba(242,184,75,.18)"; g.fillRect(bx,y+hh+base*0.25,bw,5); g.fillStyle=pcol||"#f2b84b"; g.fillRect(bx,y+hh+base*0.25,bw*p,5);
-  if(n>=0){ const ns=secName(n); let yy=y+hh+base*0.8; if(ns){ center(ns.toUpperCase(), yy+base*0.3, Math.round(base*0.32),"#f2b84b","700",0.7); yy+=base*0.45; }
-    const pn=place(n), npc=partColor(L,n), nName=nameFor(n,false);
+  g.fillStyle=C.barBg; g.fillRect(bx,y+hh+base*0.25,bw,5); g.fillStyle=pcol||C.gold; g.fillRect(bx,y+hh+base*0.25,bw*p,5);
+  if(n>=0){ const ns=secName(n); let yy=y+hh+base*0.8; if(ns){ center(ns.toUpperCase(), yy+base*0.3, Math.round(base*0.32),C.gold,"700",0.7); yy+=base*0.45; }
+    const pn=place(n), npc=C.part ? partColor(L,n) : null, nName=nameFor(n,false);
     if(nName){ label(L.lines[n].part.toUpperCase(), yy+base*0.28, hexA(nName,.8), pn, 0.85); yy+=base*0.4; }
-    const nh=drawRunsBlock(g,runsOf(n),cx,yy,small,pn.mw,npc?hexA(npc,.75):"#9a9cab",npc?hexA(npc,.9):"#c9cbd6",0.8,pn.al,pn.ax);
+    const nh=drawRunsBlock(g,runsOf(n),cx,yy,small,pn.mw,npc?hexA(npc,.75):C.next,npc?hexA(npc,.9):"#c9cbd6",0.8,pn.al,pn.ax);
     const n2=nextTimed(n);
     if(n2>=0 && !secName(n2) && o.shape!=="landscape"){ const p2=place(n2); let y2=yy+nh+base*0.2; const n2Name=nameFor(n2,false);
       if(n2Name){ label(L.lines[n2].part.toUpperCase(), y2+base*0.28, hexA(n2Name,.6), p2, 0.7); y2+=base*0.4; }
-      drawRunsBlock(g,runsOf(n2),cx,y2,small,p2.mw,"#5f6270","#7a7d8c",0.6,p2.al,p2.ax); } }
+      drawRunsBlock(g,runsOf(n2),cx,y2,small,p2.mw,C.prev,C.prevB,0.6,p2.al,p2.ax); } }
   drawProgress(g,W,H,t);
 }
 function drawWatermark(g,W,H){
   if(!vx.opts || !vx.opts.mark) return;
   const sz=Math.round(Math.min(W,H)*0.022), pad=Math.round(sz*1.2);
   g.font="600 "+sz+"px system-ui,-apple-system,'Segoe UI',Roboto,sans-serif"; g.textAlign="right"; g.textBaseline="alphabetic";
-  g.globalAlpha=0.45; g.fillStyle="#ece8df"; g.fillText("Made with PhraseCue", W-pad, H-pad-6);
+  g.globalAlpha=vxPalette(vx.opts).poster?0.6:0.45; g.fillStyle=vxPalette(vx.opts).mark; g.fillText("Made with PhraseCue", W-pad, H-pad-6);
   g.globalAlpha=1; g.textAlign="left";
 }
-function drawProgress(g,W,H,t){ drawWatermark(g,W,H); const p=Math.min(1,Math.max(0,(t-vx.a)/((vx.b-vx.a)||1))); g.fillStyle="rgba(255,255,255,.08)"; g.fillRect(0,H-6,W,6); g.fillStyle="rgba(242,184,75,.7)"; g.fillRect(0,H-6,W*p,6); }
+function drawProgress(g,W,H,t){ drawWatermark(g,W,H); const p=Math.min(1,Math.max(0,(t-vx.a)/((vx.b-vx.a)||1))); const C=vxPalette(vx.opts); g.fillStyle=C.track; g.fillRect(0,H-6,W,6); g.fillStyle=C.trackFill; g.fillRect(0,H-6,W*p,6); }
 function readVideoOpts(){
   return {audio:$("vxAudio").value, shape:$("vxShape").value, range:$("vxRange").value, clean:$("vxClean").checked,
           titleCard:$("vxTitle").checked, credit:$("vxCredit").value.trim(), dim:+$("vxDim").value, mark:$("vxMark").checked,
-          duet:$("vxDuet").value, names:$("vxNames").value};
+          duet:$("vxDuet").value, names:$("vxNames").value, style:$("vxStyle").value, poster:$("vxPoster").value};
 }
 function previewVideo(){
   if(!curName || !dur()){ return; }
@@ -2015,7 +2028,7 @@ $("vxCancel").onclick=()=>stopVideo(true);
 $("vxStart").onclick=startVideo;
 $("vxMark").checked=store.get("phrasecue:mark", true);
 $("vxMark").addEventListener("change",e=>store.set("phrasecue:mark",e.target.checked));
-["vxAudio","vxShape","vxRange","vxClean","vxTitle","vxCredit","vxDim","vxMark","vxDuet","vxNames"].forEach(id=>$(id).addEventListener("input",()=>{ if(!vx.active) previewVideo(); }));
+["vxAudio","vxShape","vxRange","vxClean","vxTitle","vxCredit","vxDim","vxMark","vxDuet","vxNames","vxStyle","vxPoster"].forEach(id=>$(id).addEventListener("input",()=>{ if(!vx.active) previewVideo(); }));
 $("vxBgBtn").onclick=()=>$("vxBgIn").click();
 $("vxBgIn").onchange=e=>{ const f=e.target.files[0]; if(!f) return; const im=new Image(); im.onload=()=>{ vx.bg=im; $("vxBgClear").style.display=""; previewVideo(); }; im.src=URL.createObjectURL(f); e.target.value=""; };
 $("vxBgClear").onclick=()=>{ vx.bg=null; $("vxBgClear").style.display="none"; previewVideo(); };
