@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.1 (in testing)
+- **Lyrics editor tag buttons, complete and grouped** (Sections · Breaks · Voices · Marks): adds [Intro], [Final Chorus], [Post-Chorus], [Hook], [Interlude], [Guitar Solo], [Breakdown], [Part: name], [Style: …] and ( backing )
+- **Smart numbering:** [Verse #] inserts the next verse number; [Pre-Chorus] numbers from the second one
+- **Vocal tags ready for detail:** [Male vocal, …] puts the cursor inside so you can type "low and intimate"
+- **Reader fix:** tags like [Short Instrumental] or [Soft Guitar Solo] now count as breaks, not notes; empty details like "[Male vocal, ]" are tidied
+
 ## 1.5.0 (2026-10-25)
 - **Cover art & tinted stage:** add a cover image per song (click the cover, ⋯ → Cover art, or drop an image); the lyrics stage takes on its colors
 - **Song panel:** cover, title, details and singer key beside the lyrics on wide screens

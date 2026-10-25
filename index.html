@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#0d0e12">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230d0e12'/%3E%3Cpath d='M14 40h22' stroke='%235f6270' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M14 28h36' stroke='%23f2b84b' stroke-width='6' stroke-linecap='round'/%3E%3Cpath d='M44 36l8 6-8 6' fill='none' stroke='%237fb8ff' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <!--
-  PhraseCue v1.5.0 — a lyric prompter for singers, built around vocal-phrasing notes.
+  PhraseCue v1.5.1 — a lyric prompter for singers, built around vocal-phrasing notes.
   Copyright (c) 2026 Chris Ross / CRBooks.ink — MIT License (see LICENSE).
   https://github.com/greenguy27/phrasecue
 
@@ -73,7 +73,7 @@ header,footer{flex:0 0 auto}
 .ledbox{max-width:820px}
 .ledbox .hint{font-size:13px;color:var(--mid);line-height:1.45;margin:.3em 0 .6em}
 .ledbox input[type=text]{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 10px;margin-bottom:8px}
-.ledbox textarea{width:100%;min-height:38vh;background:#0f1117;color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:14px/1.5 ui-monospace,Menlo,Consolas,monospace;resize:vertical}
+.ledbox textarea{width:100%;min-height:28vh;background:#0f1117;color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:14px/1.5 ui-monospace,Menlo,Consolas,monospace;resize:vertical}
 .ledbox .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:10px}
 .le-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px}
 .le-fields label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:var(--mid)}
@@ -81,10 +81,14 @@ header,footer{flex:0 0 auto}
 .le-fields input{margin:0!important}
 .le-tags{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px}
 .le-lab{font-size:12px;font-weight:600;color:var(--mid);width:100%}
+.le-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;width:100%}
+.le-g{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);width:64px;flex:0 0 64px}
 .le-tags button{border-radius:99px;padding:6px 11px;font-size:13px;font-weight:600}
 .le-tags .t-sec{color:var(--accent)}.le-tags .t-brk{color:var(--target)}
 .le-tags .t-m{color:#6fd3e8;border-color:#2c5560}.le-tags .t-f{color:#ff9ec4;border-color:#5a3346}.le-tags .t-b{color:#c7a8ff;border-color:#45395f}
 .le-sep{width:1px;height:22px;background:var(--line);margin:0 3px}
+.le-tags button{padding:5px 10px!important;font-size:12.5px!important}
+@media (max-width:640px){.le-g{width:100%;flex-basis:100%}}
 .le-info{display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:13px;color:var(--mid);margin-top:8px}
 .le-info .fmt{padding:3px 10px;border-radius:99px;background:var(--panel2);border:1px solid var(--line);color:var(--fg)}
 .le-info .keep{margin-left:auto;color:#9be29b}.le-info .keep.warn{color:#f2c46b}
@@ -440,11 +444,18 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
   </div>
   <div class="le-tags" role="group" aria-label="Insert at cursor">
     <span class="le-lab">Insert at cursor</span>
-    <button data-ins="[Verse]" class="t-sec">[Verse]</button><button data-ins="[Pre-Chorus]" class="t-sec">[Pre-Chorus]</button><button data-ins="[Chorus]" class="t-sec">[Chorus]</button><button data-ins="[Bridge]" class="t-sec">[Bridge]</button><button data-ins="[Outro]" class="t-sec">[Outro]</button><button data-ins="[Instrumental Break]" class="t-brk">[Instrumental Break]</button>
-    <span class="le-sep"></span>
-    <button data-ins="[Male vocal]" class="t-m">[Male vocal]</button><button data-ins="[Female vocal]" class="t-f">[Female vocal]</button><button data-ins="[Both vocals]" class="t-b">[Both vocals]</button>
-    <span class="le-sep"></span>
-    <button data-ins="//" title="Breath mark on its own line">// breath</button><button data-wrap="**" title="Stress the selected word">**stress**</button>
+    <div class="le-row"><span class="le-g">Sections</span>
+      <button data-ins="[Intro]" class="t-sec">[Intro]</button><button data-ins="[Verse {n}]" data-num="Verse" class="t-sec" title="Inserts the next verse number">[Verse #]</button><button data-ins="[Pre-Chorus{n}]" data-num="Pre-Chorus" data-first-plain="1" class="t-sec" title="Numbered from the second one">[Pre-Chorus]</button><button data-ins="[Chorus]" class="t-sec">[Chorus]</button><button data-ins="[Post-Chorus]" class="t-sec">[Post-Chorus]</button><button data-ins="[Hook]" class="t-sec">[Hook]</button><button data-ins="[Bridge]" class="t-sec">[Bridge]</button><button data-ins="[Final Chorus]" class="t-sec">[Final Chorus]</button><button data-ins="[Outro]" class="t-sec">[Outro]</button>
+    </div>
+    <div class="le-row"><span class="le-g">Breaks</span>
+      <button data-ins="[Instrumental Break]" class="t-brk">[Instrumental Break]</button><button data-ins="[Interlude]" class="t-brk">[Interlude]</button><button data-ins="[Guitar Solo]" class="t-brk">[Guitar Solo]</button><button data-ins="[Breakdown]" class="t-brk">[Breakdown]</button>
+    </div>
+    <div class="le-row"><span class="le-g">Voices</span>
+      <button data-ins="[Male vocal, |]" class="t-m" title="Type how it's sung, e.g. low and intimate">[Male vocal, …]</button><button data-ins="[Female vocal, |]" class="t-f" title="Type how it's sung, e.g. restrained">[Female vocal, …]</button><button data-ins="[Both vocals, |]" class="t-b">[Both vocals, …]</button><button data-ins="[Part: |]" title="A named singer, e.g. Lila">[Part: name]</button>
+    </div>
+    <div class="le-row"><span class="le-g">Marks</span>
+      <button data-ins="[Style: |]" title="Genre, voice and tempo line under the title">[Style: …]</button><button data-wrap="()" title="Backing vocal or echo; wraps the selection">( backing )</button><button data-ins="//" title="Breath mark on its own line">// breath</button><button data-wrap="**" title="Stress the selected word">**stress**</button>
+    </div>
   </div>
   <textarea id="leText" spellcheck="false" placeholder="[Verse 1]&#10;[Male vocal]&#10;First line…"></textarea>
   <div id="leInfo" class="le-info"></div>
@@ -472,7 +483,7 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
 <script>
 "use strict";
 const $ = id => document.getElementById(id);
-const APP = {name:"PhraseCue", version:"1.5.0", repo:"https://github.com/greenguy27/phrasecue", site:"https://crbooks.ink"};
+const APP = {name:"PhraseCue", version:"1.5.1", repo:"https://github.com/greenguy27/phrasecue", site:"https://crbooks.ink"};
 const store = {
   get(k, d){ try{ const v = localStorage.getItem(k); return v==null ? d : JSON.parse(v); }catch(e){ return d; } },
   set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
@@ -548,11 +559,11 @@ function parseSuno(txt, name){
     if(tag){
       const c=tag[1].trim();
       if(/^(style|genre|type|tempo|bpm|key)\b|^style\s*,/i.test(c) || /:/.test(c) && /style|genre/i.test(c)){ items.push({type:"meta",html:esc(c)}); continue; }
-      const parts=c.split(/\s*[,;|]\s*/);
-      if(SUNO_SECTION.test(parts[0])){
+      const parts=c.replace(/[\s,;|]+$/,"").split(/\s*[,;|]\s*/).filter(Boolean);
+      if(SUNO_SECTION.test(parts[0]) || /\b(instrumental|solo|interlude)\b/i.test(parts[0])){
         items.push({type:"section",html:esc(parts[0])});
         if(parts.length>1) items.push({type:"note",html:esc(parts.slice(1).join(", "))});
-      } else items.push({type:"note",html:esc(c)});
+      } else items.push({type:"note",html:esc(parts.join(", "))});
       continue;
     }
     if(/^\(.*\)$/.test(s)){ items.push({type:"backing",html:esc(s)}); continue; }
@@ -1970,11 +1981,25 @@ function openLyricsEditor(fresh){
   $("lyed").classList.add("show");
   setTimeout(()=>$(L?"leText":"leTitle").focus(),50);
 }
+function nextSectionNumber(text, name, firstPlain){
+  const re=new RegExp("^\\s*\\[\\s*"+name.replace(/[-]/g,"[- ]?")+"(?:\\s+(\\d+))?\\s*(?:[,\\]])","gim");
+  let count=0, max=0, m; while((m=re.exec(text))){ count++; if(m[1]) max=Math.max(max,+m[1]); }
+  const n=Math.max(count,max)+1;
+  return firstPlain && n===1 ? "" : (firstPlain ? " "+n : String(n));
+}
 function insertAtCursor(btn){
   const ta=$("leText"), v=ta.value, st=ta.selectionStart??v.length, en=ta.selectionEnd??st;
   let ins, caret;
-  if(btn.dataset.wrap){ const w=btn.dataset.wrap, sel=v.slice(st,en)||"word"; ins=w+sel+w; caret=st+ins.length; }
-  else { const pre=(st>0 && v[st-1]!=="\n") ? "\n" : ""; ins=pre+btn.dataset.ins+"\n"; caret=st+ins.length; }
+  if(btn.dataset.wrap){
+    const w=btn.dataset.wrap, a=w==="()"?"(":w, z=w==="()"?")":w, sel=v.slice(st,en);
+    if(sel){ ins=a+sel+z; caret=st+ins.length; } else { ins=a+(w==="**"?"word":"")+z; caret = w==="**" ? st+ins.length : st+1; }
+  } else {
+    let tag=btn.dataset.ins;
+    if(btn.dataset.num) tag=tag.replace("{n}", nextSectionNumber(v.slice(0,st)+v.slice(en), btn.dataset.num, !!btn.dataset.firstPlain));
+    const bar=tag.indexOf("|"); tag=tag.replace("|","");
+    const pre=(st>0 && v[st-1]!=="\n") ? "\n" : "";
+    ins=pre+tag+"\n"; caret = bar>=0 ? st+pre.length+bar : st+ins.length;
+  }
   ta.value=v.slice(0,st)+ins+v.slice(en); ta.focus(); ta.setSelectionRange(caret,caret);
   ta.dispatchEvent(new Event("input"));
 }
