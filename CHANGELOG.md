@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.5.0 (in testing)
+## 1.5.0 (2026-10-25)
 - **Cover art & tinted stage:** add a cover image per song (click the cover, ⋯ → Cover art, or drop an image); the lyrics stage takes on its colors
 - **Song panel:** cover, title, details and singer key beside the lyrics on wide screens
 - **Lyric view:** current line larger, past lines softly blurred, singer names above each change of singer; round play button with elapsed / total time
