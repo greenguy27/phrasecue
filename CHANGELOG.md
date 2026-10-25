@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.5.1 (in testing)
+## 1.5.1 (2026-10-25)
 - **Lyrics editor tag buttons, complete and grouped** (Sections · Breaks · Voices · Marks): adds [Intro], [Final Chorus], [Post-Chorus], [Hook], [Interlude], [Guitar Solo], [Breakdown], [Part: name], [Style: …] and ( backing )
 - **Smart numbering:** [Verse #] inserts the next verse number; [Pre-Chorus] numbers from the second one
 - **Vocal tags ready for detail:** [Male vocal, …] puts the cursor inside so you can type "low and intimate"
