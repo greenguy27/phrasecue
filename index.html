@@ -193,6 +193,15 @@ label.small{font-size:13px;color:var(--mid);display:flex;align-items:center;gap:
 .helpbox table{border-collapse:collapse;width:100%;font-size:14px}
 .helpbox td{padding:5px 8px;border-bottom:1px solid var(--line);vertical-align:top}
 .vbox{max-width:760px}
+.shbox{max-width:860px}
+.shbox .hint{font-size:13px;color:var(--mid);margin:.3em 0 .8em}
+.sh-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:18px;align-items:start}
+.sh-prev{width:100%;max-height:62vh;object-fit:contain;border-radius:10px;border:1px solid var(--line);background:#000;display:block}
+.sh-opts{display:flex;flex-direction:column;gap:10px;font-size:13px;color:var(--mid)}
+.sh-opts label{display:flex;flex-direction:column;gap:4px}
+.sh-opts label.chk{flex-direction:row;align-items:center;gap:8px}
+.sh-opts select,.sh-opts input[type=text]{width:100%;max-width:none;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+@media (max-width:700px){.sh-grid{grid-template-columns:1fr}}
 .vbox .hint{font-size:13px;color:var(--mid);line-height:1.45;margin:.3em 0 .6em}
 .vgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;font-size:13px;color:var(--mid)}
 .vgrid label{display:flex;flex-direction:column;gap:4px}
@@ -237,6 +246,7 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
       </div>
     </details>
     <button id="btnVideo" title="Export a lyric or karaoke video">🎬 Video</button>
+    <button id="btnShare" title="Share a line as an image" aria-label="Share a line as an image"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/></svg> Share</button>
     <details class="menu" id="moreMenu"><summary title="More">⋯</summary>
       <div class="menu-items">
         <div class="menu-files"><span class="chip" id="chipV">Full mix: —</span><span class="chip" id="chipI">Instrumental: —</span></div>
@@ -374,6 +384,24 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
   <b>License:</b> MIT — free to use, change and share; keep the copyright notice.</p>
   <p class="small">Copyright © 2026 Chris Ross. Provided “as is”, without warranty of any kind.</p>
   <p style="text-align:right;margin-bottom:0"><button id="btnAboutClose">Close</button></p>
+</div></div>
+
+<div class="help" id="share"><div class="helpbox shbox">
+  <h3>Share a line</h3>
+  <p class="hint">Turn one lyric line into a picture for posts. It uses the song's cover art when there is one.</p>
+  <div class="sh-grid">
+    <canvas id="shPrev" class="sh-prev" aria-label="Card preview"></canvas>
+    <div class="sh-opts">
+      <label>Line <select id="shLine"></select></label>
+      <label>Text <span style="color:var(--dim)">(edit to tidy stress marks or spelling)</span><textarea id="shText" rows="3" style="width:100%;resize:vertical;background:var(--panel2);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font:14px/1.4 inherit"></textarea></label>
+      <label>Size <select id="shSize"><option value="square">Square 1080×1080 (posts)</option><option value="story">Story 1080×1920 (Stories, Reels)</option></select></label>
+      <label>Glow <select id="shGlow"><option value="242,184,75">Gold</option><option value="127,184,255">Blue</option><option value="255,158,196">Rose</option><option value="199,168,255">Lavender</option></select></label>
+      <label>Credit line <input type="text" id="shCredit" maxlength="80" placeholder="e.g. artist name · crbooks.ink"></label>
+      <label class="chk"><input type="checkbox" id="shMark" checked> “Made with PhraseCue” tag</label>
+      <button id="shDownload" class="on">⬇ Download PNG</button>
+    </div>
+  </div>
+  <p style="text-align:right;margin-bottom:0"><button id="shClose">Close</button></p>
 </div></div>
 
 <div class="help" id="video"><div class="helpbox vbox">
@@ -1520,6 +1548,62 @@ function renderTakes(){
 }
 function syncLatUI(){ $("lat").value=micLatency; $("latVal").textContent=(micLatency>=0?"+":"")+Math.round(micLatency*1000)+" ms"; }
 
+// ---------- share a line as an image card ----------
+function lineText(L,i){ return cleanPhrasing(lineRuns(L.lines[i].html,true).map(r=>r.t).join("")).replace(/\s+/g," ").trim(); }
+function wrapPlain(g,text,maxW){ const words=text.split(" "), out=[]; let cur="";
+  for(const w of words){ const t=cur?cur+" "+w:w; if(g.measureText(t).width>maxW && cur){ out.push(cur); cur=w; } else cur=t; } if(cur) out.push(cur); return out; }
+function drawShareCard(g,W,H,o){
+  const L=lyrics[curName], cover=$("coverBox").classList.contains("has") ? $("coverImg") : null;
+  g.save(); g.clearRect(0,0,W,H);
+  if(cover && cover.naturalWidth){
+    const s=Math.max(W/cover.naturalWidth,H/cover.naturalHeight)*1.15, iw=cover.naturalWidth*s, ih=cover.naturalHeight*s;
+    g.filter="blur(26px) saturate(1.2)"; g.drawImage(cover,(W-iw)/2,(H-ih)/2,iw,ih); g.filter="none";
+    g.fillStyle="rgba(6,7,14,.45)"; g.fillRect(0,0,W,H);
+    const cs=Math.round(W*0.26); g.save(); g.shadowColor="rgba(0,0,0,.5)"; g.shadowBlur=40; g.drawImage(cover,W-cs-W*0.08,H*0.08,cs,cs); g.restore();
+  } else {
+    const hz=H*0.55, sky=g.createLinearGradient(0,0,0,hz); sky.addColorStop(0,"#141a3a"); sky.addColorStop(1,"#2c2350");
+    g.fillStyle=sky; g.fillRect(0,0,W,hz+1); const wa=g.createLinearGradient(0,hz,0,H); wa.addColorStop(0,"#0e1222"); wa.addColorStop(1,"#05060c"); g.fillStyle=wa; g.fillRect(0,hz,W,H-hz);
+    const mx=W*0.72, my=H*0.2, mr=W*0.09;
+    const glow=g.createRadialGradient(mx,my,mr*0.8,mx,my,mr*4); glow.addColorStop(0,"rgba("+o.glow+",.38)"); glow.addColorStop(1,"rgba(0,0,0,0)"); g.fillStyle=glow; g.fillRect(0,0,W,H);
+    const md=g.createRadialGradient(mx-mr*0.3,my-mr*0.3,mr*0.1,mx,my,mr); md.addColorStop(0,"#fffaf0"); md.addColorStop(1,"#d9c79f"); g.fillStyle=md; g.beginPath(); g.arc(mx,my,mr,0,7); g.fill();
+    for(let i=0;i<26;i++){ const y=hz+10+i*(H-hz)/30, w=mr*1.4*(1-i/32); g.fillStyle="rgba(255,236,190,"+(0.28*(1-i/28))+")"; g.fillRect(mx-w/2,y,w,3); }
+  }
+  const scrim=g.createLinearGradient(0,0,W,0); scrim.addColorStop(0,"rgba(5,6,12,.85)"); scrim.addColorStop(0.65,"rgba(5,6,12,.35)"); scrim.addColorStop(1,"rgba(5,6,12,0)"); g.fillStyle=scrim; g.fillRect(0,0,W,H);
+  // the line, sized to fit
+  const hasCover=!!(cover && cover.naturalWidth), text=o.text||"", left=W*0.09, maxW = hasCover && !o.story ? W*0.56 : W*0.78; let size=Math.round(W*(o.story?0.105:0.072)), lines;
+  for(;;){ g.font="700 "+size+"px Fraunces, Georgia, 'Times New Roman', serif"; lines=wrapPlain(g,text,maxW); if((lines.length<= (o.story?7:5)) || size<=34) break; size-=4; }
+  const lh=size*1.14, blockH=lines.length*lh, top=(o.story?H*0.5:(hasCover?H*0.5:H*0.36))-blockH/2+size;
+  g.fillStyle="rgb("+o.glow+")"; const q=W*0.06, qx=left, qy=top-size-q*0.9; // quote mark
+  g.beginPath(); g.moveTo(qx,qy+q*0.75); g.lineTo(qx,qy+q*0.4); g.quadraticCurveTo(qx,qy,qx+q*0.38,qy); g.lineTo(qx+q*0.38,qy+q*0.14); g.quadraticCurveTo(qx+q*0.2,qy+q*0.14,qx+q*0.2,qy+q*0.4); g.lineTo(qx+q*0.38,qy+q*0.4); g.lineTo(qx+q*0.38,qy+q*0.75); g.closePath(); g.fill();
+  g.save(); g.translate(q*0.5,0); g.beginPath(); g.moveTo(qx,qy+q*0.75); g.lineTo(qx,qy+q*0.4); g.quadraticCurveTo(qx,qy,qx+q*0.38,qy); g.lineTo(qx+q*0.38,qy+q*0.14); g.quadraticCurveTo(qx+q*0.2,qy+q*0.14,qx+q*0.2,qy+q*0.4); g.lineTo(qx+q*0.38,qy+q*0.4); g.lineTo(qx+q*0.38,qy+q*0.75); g.closePath(); g.fill(); g.restore();
+  g.fillStyle="#fbf3e2"; g.textBaseline="alphabetic"; g.shadowColor="rgba(0,0,0,.6)"; g.shadowBlur=18;
+  lines.forEach((ln,k)=>g.fillText(ln,left,top+k*lh)); g.shadowBlur=0;
+  const y2=top+blockH+W*0.03;
+  g.fillStyle="rgb("+o.glow+")"; g.fillRect(left,y2-W*0.012,W*0.067,W*0.005);
+  g.font="700 "+Math.round(W*0.028)+"px Inter, system-ui, 'Segoe UI', sans-serif"; g.fillStyle="#fbf3e2"; g.fillText(o.title.toUpperCase(),left+W*0.085,y2);
+  if(o.credit){ g.font="500 "+Math.round(W*0.022)+"px Inter, system-ui, 'Segoe UI', sans-serif"; g.fillStyle="rgba(230,226,244,.9)"; g.fillText(o.credit,left,y2+W*0.055); }
+  if(o.mark){ g.font="600 "+Math.round(W*0.0185)+"px Inter, system-ui, 'Segoe UI', sans-serif"; g.fillStyle="rgba(236,232,223,.55)"; g.textAlign="right"; g.fillText("Made with PhraseCue",W-W*0.045,H-W*0.04); g.textAlign="left"; }
+  g.restore();
+}
+function shareOpts(){ const L=lyrics[curName], i=+$("shLine").value||0;
+  return {text:$("shText").value.trim()||lineText(L,i), idx:i, title:songTitleOf(L,curName), credit:$("shCredit").value.trim(), mark:$("shMark").checked, glow:$("shGlow").value, story:$("shSize").value==="story"}; }
+function previewShare(){ if(!curName) return; const o=shareOpts(), W=1080, H=o.story?1920:1080, c=$("shPrev"); c.width=W; c.height=H; drawShareCard(c.getContext("2d"),W,H,o); }
+function openShare(){
+  if(!curName){ toast("Load or paste lyrics first"); return; }
+  const L=lyrics[curName]; if(!L.lines.length){ toast("These lyrics have no lines yet"); return; }
+  let cur = noAudio() ? manualIdx : currentIndex(now()+lead); if(cur<0) cur=0;
+  $("shLine").innerHTML=L.lines.map((l,i)=>'<option value="'+i+'">'+(i+1)+'. '+esc(lineText(L,i).slice(0,70))+'</option>').join("");
+  $("shLine").value=String(cur); $("shText").value=lineText(L,cur);
+  if(!$("shCredit").value) $("shCredit").value=store.get("phrasecue:credit","") || ($("vxCredit") ? $("vxCredit").value : "");
+  $("share").classList.add("show"); previewShare();
+}
+function downloadShare(){
+  const o=shareOpts(), W=1080, H=o.story?1920:1080, c=document.createElement("canvas"); c.width=W; c.height=H;
+  drawShareCard(c.getContext("2d"),W,H,o);
+  c.toBlob(b=>{ if(b) downloadBlob(o.title.replace(/[\\/:*?"<>|]+/g,"-")+" - line "+(o.idx+1)+(o.story?" (story)":"")+".png", b); },"image/png");
+  store.set("phrasecue:credit", o.credit);
+}
+
 // ---------- video export (lyric / karaoke video) ----------
 const vx={active:false, cancel:false, mr:null, chunks:[], canvas:null, opts:null, bg:null, a:0, b:0, saved:null, graph:null, fadeFrom:-9, lastKey:null};
 function videoMime(){
@@ -1796,6 +1880,12 @@ $("btnFsUp").onclick=()=>{ fs=Math.min(120,fs+4); applyFs(); };
 $("btnFsDown").onclick=()=>{ fs=Math.max(18,fs-4); applyFs(); };
 $("btnFull").onclick=()=>{ document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen?.(); };
 $("snackUndo").onclick=undoLast;
+$("btnShare").onclick=openShare;
+$("shClose").onclick=()=>$("share").classList.remove("show");
+$("share").addEventListener("click",e=>{ if(e.target.id==="share") $("share").classList.remove("show"); });
+["shText","shSize","shGlow","shCredit","shMark"].forEach(id=>$(id).addEventListener("input",previewShare));
+$("shLine").addEventListener("input",()=>{ $("shText").value=lineText(lyrics[curName],+$("shLine").value); previewShare(); });
+$("shDownload").onclick=downloadShare;
 $("coverBox").onclick=()=>$("coverIn").click();
 $("btnCover").onclick=()=>{ $("moreMenu").open=false; $("coverIn").click(); };
 $("btnCoverOff").onclick=()=>{ $("moreMenu").open=false; if(curName){ try{ localStorage.removeItem(coverKey()); }catch(e){} applyCover(); toast("Cover removed"); } };
@@ -1944,6 +2034,7 @@ document.addEventListener("mouseup",e=>{ const b=e.target.closest && e.target.cl
 
 document.addEventListener("keydown",e=>{
   if($("pickInst").classList.contains("show")) return;
+  if($("share").classList.contains("show")){ if(e.key==="Escape") $("share").classList.remove("show"); return; }
   if($("lyed").classList.contains("show")){ if(e.key==="Escape") $("lyed").classList.remove("show"); else if(e.key==="Enter" && (e.ctrlKey||e.metaKey)){ e.preventDefault(); useEditedLyrics(); } return; }
   if(e.target.tagName==="SELECT" || e.target.tagName==="TEXTAREA" || (e.target.tagName==="INPUT" && e.target.type!=="range" && e.target.type!=="checkbox")) return;
   if((e.ctrlKey||e.metaKey) && (e.key==="z"||e.key==="Z") && !e.shiftKey){ e.preventDefault(); undoLast(); return; }
