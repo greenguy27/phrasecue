@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#0d0e12">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230d0e12'/%3E%3Cpath d='M14 40h22' stroke='%235f6270' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M14 28h36' stroke='%23f2b84b' stroke-width='6' stroke-linecap='round'/%3E%3Cpath d='M44 36l8 6-8 6' fill='none' stroke='%237fb8ff' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <!--
-  PhraseCue v1.5.1 — a lyric prompter for singers, built around vocal-phrasing notes.
+  PhraseCue v1.5.2 — a lyric prompter for singers, built around vocal-phrasing notes.
   Copyright (c) 2026 Chris Ross / CRBooks.ink — MIT License (see LICENSE).
   https://github.com/greenguy27/phrasecue
 
@@ -439,7 +439,7 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
   <h3>📝 Lyrics</h3>
   <p class="hint">Paste or type lyrics in any format PhraseCue reads: plain, vocal phrasing (arrows, <b>**bold**</b>, <code>//</code>) or Suno-style <code>[Verse]</code> / <code>[Male vocal]</code> tags. They're saved in this browser. Editing keeps the timing of every line you didn't change.</p>
   <div class="le-fields">
-    <label>Song title<input type="text" id="leTitle" placeholder="e.g. Luna Bloom" maxlength="80"></label>
+    <label>Song title<input type="text" id="leTitle" placeholder="e.g. Paper Boats" maxlength="80"></label>
     <label><span>Version <span class="opt">(optional)</span></span><input type="text" id="leVer" placeholder="e.g. Phrasing, Plain, Duet" maxlength="40"></label>
   </div>
   <div class="le-tags" role="group" aria-label="Insert at cursor">
@@ -483,7 +483,7 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
 <script>
 "use strict";
 const $ = id => document.getElementById(id);
-const APP = {name:"PhraseCue", version:"1.5.1", repo:"https://github.com/greenguy27/phrasecue", site:"https://crbooks.ink"};
+const APP = {name:"PhraseCue", version:"1.5.2", repo:"https://github.com/greenguy27/phrasecue", site:"https://crbooks.ink"};
 const store = {
   get(k, d){ try{ const v = localStorage.getItem(k); return v==null ? d : JSON.parse(v); }catch(e){ return d; } },
   set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
@@ -521,7 +521,7 @@ const fmtShort = t => { if(!isFinite(t)) t=0; const m=Math.floor(t/60), s=Math.f
 const undoStack=[];
 function snapTiming(label){ if(!curName) return; const L=lyrics[curName]; undoStack.push({name:curName, times:L.times.slice(), ends:L.ends.slice(), label}); if(undoStack.length>30) undoStack.shift(); }
 function snapLyrics(name,label){ const L=lyrics[name]; if(!L) return; undoStack.push({name, src:L.src, times:L.times.slice(), ends:L.ends.slice(), label, text:true}); if(undoStack.length>30) undoStack.shift(); }
-function snack(msg){ const s=$("snack"); $("snackMsg").textContent=msg; s.classList.add("show"); clearTimeout(snack._h); snack._h=setTimeout(()=>s.classList.remove("show"),7000); }
+function snack(msg, act){ const s=$("snack"); $("snackMsg").textContent=msg; snack._fn=act&&act.fn||undoLast; $("snackUndo").textContent=act&&act.label||"Undo"; s.classList.add("show"); clearTimeout(snack._h); snack._h=setTimeout(()=>s.classList.remove("show"),7000); }
 function undoLast(){
   const u=undoStack.pop(); $("snack").classList.remove("show");
   if(!u){ toast("Nothing to undo"); return; }
@@ -1077,7 +1077,8 @@ function setMode(m){
     const T=lyrics[curName].times;
     const back = syncIdx>0 && T[syncIdx-1]!=null ? T[syncIdx-1]-1 : 0;
     seek(Math.max(0,back));
-    toast("Sync mode: Space at the start of each outlined line");
+    if(syncIdx>0) snack("Starting at line "+(syncIdx+1)+" — lines before it already have times", {label:"Start over at line 1", fn:()=>{ if(mode!=="sync") return; syncIdx=0; pause(); seek(0); lastCur=-2; paint(); toast("Tap Space to start the song, then tap as line 1 starts"); }});
+    else toast("Time mode: Space starts the song, then tap as each BLUE line starts");
   } else {
     if(trackBeforeSync) setTrack(trackBeforeSync);
     toast("Sing mode");
@@ -1091,7 +1092,8 @@ function stamp(){
   // ignore accidental double taps (held key / bounce)
   if(syncIdx>0 && L.times[syncIdx-1]!=null && now()-L.times[syncIdx-1] < 0.35 && now()>=L.times[syncIdx-1]) return;
   let t=+now().toFixed(2);
-  const sn=snapTime(t);
+  // no Snap on line 1: intros often leave false "vocal starts" when the mixes don't cancel perfectly
+  const sn = syncIdx===0 ? null : snapTime(t);
   const prevT = syncIdx>0 ? L.times[syncIdx-1] : null;
   if(sn!=null && (prevT==null || sn>prevT+0.2)) t=sn;
   L.times[syncIdx]=t; L.ends[syncIdx]=null;
@@ -1903,7 +1905,7 @@ $("btnClear").onclick=()=>{
 $("btnFsUp").onclick=()=>{ fs=Math.min(120,fs+4); applyFs(); };
 $("btnFsDown").onclick=()=>{ fs=Math.max(18,fs-4); applyFs(); };
 $("btnFull").onclick=()=>{ document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen?.(); };
-$("snackUndo").onclick=undoLast;
+$("snackUndo").onclick=()=>{ $("snack").classList.remove("show"); (snack._fn||undoLast)(); };
 $("btnShare").onclick=openShare;
 $("shClose").onclick=()=>$("share").classList.remove("show");
 $("share").addEventListener("click",e=>{ if(e.target.id==="share") $("share").classList.remove("show"); });

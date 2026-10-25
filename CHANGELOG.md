@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.2 (2026-10-25)
+- **Time mode says where it starts:** if earlier lines already have times, a pop-up says "Starting at line N" with a **Start over at line 1** button (fixes the "one line off" mix-up after a partial run)
+- **No Snap on line 1:** the first tap is kept exactly where you tap, because song intros can fool vocal detection
+- Song title hint in the lyrics editor now uses the sample song ("e.g. Paper Boats")
+
 ## Docs (2026-10-25)
 - README: new main screenshot, a Screenshots gallery (duet, Time mode, lyrics editor, welcome, video export, share card, video frames), updated feature list, Quick start and tag lists
 - New example: `examples/example-suno-duet.txt` (Suno-style tags and a duet)

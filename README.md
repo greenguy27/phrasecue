@@ -50,7 +50,7 @@ The pictures use the sample song [`examples/example-suno-duet.txt`](examples/exa
    - the **full mix** audio (MP3, WAV, M4A, OGG, FLAC)
    - the **instrumental**. If its name contains *karaoke*, *instrumental*, *without*, *backing*, *minus* or *no vocal*, it's detected automatically. Otherwise PhraseCue asks which file has no vocals.
    - one or more **lyrics** files (`.txt`, `.md` or `.lrc`)
-3. **Time it, once per lyrics file:** click **⏱ Time** (or press **S**), then **Space** to start the song, then tap **Space** the moment the singer starts each **blue** line. With both mixes loaded, **🧲 Snap** tightens your taps automatically.
+3. **Time it, once per lyrics file:** click **⏱ Time** (or press **S**), then **Space** to start the song, then tap **Space** the moment the singer starts each **blue** line. With both mixes loaded, **🧲 Snap** tightens your taps automatically. If earlier lines already have times, Time mode picks up at the first untimed line and says so. Click **Start over at line 1** on the pop-up to redo the whole song.
 4. **Sing:** click **🎤 Sing** (or press **S**), choose **Karaoke** for the instrumental (or press **V**), then **Space** to play.
 5. **Keep it:** use **Timing ▾ → 💾 Save timing file** and keep the `.timing.json` file next to your song. Next time, or on another computer, drag it in with the other files.
 
@@ -171,7 +171,7 @@ During an instrumental break, the last line dims and a **♪ Instrumental** bar 
 - **Loop:** `L` loops the current line, `Shift`+`L` loops the current section, and `A` / `B` set your own start and end. Press `L` again or click the gold loop button to stop.
 - **Speed:** the *Speed* menu (or `,` and `.`) plays at 50–110%. Pitch stays the same.
 - **Timeline:** the strip above the controls. Gold markers are your lines and blue ticks are detected vocal starts. Click to jump, drag a marker to retime it (hold `Shift` to skip snapping), scroll to zoom, drag to pan, and double-click to zoom back out.
-- **Snap:** turned on automatically when both mixes are loaded. Taps land on the nearest strong vocal start. It isn't perfect: if a stamp looks wrong, drag its marker or turn Snap off. It doesn't time the whole song by itself, because word onsets inside a line look just like line starts.
+- **Snap:** turned on automatically when both mixes are loaded. Taps land on the nearest strong vocal start. Line 1 is never snapped, because intros can fool the vocal detection. It isn't perfect: if a stamp looks wrong, drag its marker or turn Snap off. It doesn't time the whole song by itself, because word onsets inside a line look just like line starts.
 - **Record:** press `R` to start and stop. Recording starts from where you are, or from the loop start, and stops at the loop end. **Wear headphones.** Open **🎙 Takes** (`T`) to play takes back, adjust *Voice timing* if you sound early or late, and download **Voice** (webm/m4a) or **Mix** (WAV, takes recorded at 100% speed). Takes aren't saved after you close the tab.
   - The browser asks for microphone access the first time. Recording works from the hosted link in every browser. Opening the file directly works in Chrome and Edge, but Safari may refuse.
   - Chrome asks once to *allow multiple downloads* the second time you download from the page. Click Allow.
