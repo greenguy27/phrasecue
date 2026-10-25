@@ -73,9 +73,22 @@ header,footer{flex:0 0 auto}
 .ledbox{max-width:820px}
 .ledbox .hint{font-size:13px;color:var(--mid);line-height:1.45;margin:.3em 0 .6em}
 .ledbox input[type=text]{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 10px;margin-bottom:8px}
-.ledbox textarea{width:100%;min-height:46vh;background:#0f1117;color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:14px/1.5 ui-monospace,Menlo,Consolas,monospace;resize:vertical}
+.ledbox textarea{width:100%;min-height:38vh;background:#0f1117;color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:14px/1.5 ui-monospace,Menlo,Consolas,monospace;resize:vertical}
 .ledbox .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:10px}
-.ledbox #leInfo{font-size:13px;color:var(--mid);margin:6px 0 0}
+.le-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px}
+.le-fields label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:var(--mid)}
+.le-fields .opt{font-weight:400;color:var(--dim)}
+.le-fields input{margin:0!important}
+.le-tags{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px}
+.le-lab{font-size:12px;font-weight:600;color:var(--mid);width:100%}
+.le-tags button{border-radius:99px;padding:6px 11px;font-size:13px;font-weight:600}
+.le-tags .t-sec{color:var(--accent)}.le-tags .t-brk{color:var(--target)}
+.le-tags .t-m{color:#6fd3e8;border-color:#2c5560}.le-tags .t-f{color:#ff9ec4;border-color:#5a3346}.le-tags .t-b{color:#c7a8ff;border-color:#45395f}
+.le-sep{width:1px;height:22px;background:var(--line);margin:0 3px}
+.le-info{display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:13px;color:var(--mid);margin-top:8px}
+.le-info .fmt{padding:3px 10px;border-radius:99px;background:var(--panel2);border:1px solid var(--line);color:var(--fg)}
+.le-info .keep{margin-left:auto;color:#9be29b}.le-info .keep.warn{color:#f2c46b}
+@media (max-width:640px){.le-fields{grid-template-columns:1fr}}
 .dropzone .alt{display:block;margin-top:10px;font-size:13px}
 .backing{font-size:calc(var(--fs)*.55);color:var(--mid);font-style:italic;margin:.05em 0 .25em;opacity:.85}
 .line .bk{color:var(--mid);font-style:italic;font-weight:400}
@@ -390,13 +403,24 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
 <div class="help" id="lyed"><div class="helpbox ledbox">
   <h3>📝 Lyrics</h3>
   <p class="hint">Paste or type lyrics in any format PhraseCue reads: plain, vocal phrasing (arrows, <b>**bold**</b>, <code>//</code>) or Suno-style <code>[Verse]</code> / <code>[Male vocal]</code> tags. They're saved in this browser. Editing keeps the timing of every line you didn't change.</p>
-  <input type="text" id="leName" placeholder="Name, e.g. Luna Bloom – phrasing" maxlength="100">
+  <div class="le-fields">
+    <label>Song title<input type="text" id="leTitle" placeholder="e.g. Luna Bloom" maxlength="80"></label>
+    <label><span>Version <span class="opt">(optional)</span></span><input type="text" id="leVer" placeholder="e.g. Phrasing, Plain, Duet" maxlength="40"></label>
+  </div>
+  <div class="le-tags" role="group" aria-label="Insert at cursor">
+    <span class="le-lab">Insert at cursor</span>
+    <button data-ins="[Verse]" class="t-sec">[Verse]</button><button data-ins="[Pre-Chorus]" class="t-sec">[Pre-Chorus]</button><button data-ins="[Chorus]" class="t-sec">[Chorus]</button><button data-ins="[Bridge]" class="t-sec">[Bridge]</button><button data-ins="[Outro]" class="t-sec">[Outro]</button><button data-ins="[Instrumental Break]" class="t-brk">[Instrumental Break]</button>
+    <span class="le-sep"></span>
+    <button data-ins="[Male vocal]" class="t-m">[Male vocal]</button><button data-ins="[Female vocal]" class="t-f">[Female vocal]</button><button data-ins="[Both vocals]" class="t-b">[Both vocals]</button>
+    <span class="le-sep"></span>
+    <button data-ins="//" title="Breath mark on its own line">// breath</button><button data-wrap="**" title="Stress the selected word">**stress**</button>
+  </div>
   <textarea id="leText" spellcheck="false" placeholder="[Verse 1]&#10;[Male vocal]&#10;First line…"></textarea>
-  <p id="leInfo"></p>
+  <div id="leInfo" class="le-info"></div>
   <div class="row">
-    <button id="leNew" title="Start a new, empty lyrics sheet">New</button>
     <button id="leDownload" title="Save these lyrics as a .txt file">⬇ Download .txt</button>
-    <button id="leDelete" title="Remove the copy saved in this browser">🗑 Forget saved copy</button>
+    <button id="leNew" title="Start a new, empty lyrics sheet">New</button>
+    <button id="leDelete" title="Remove the copy saved in this browser">Forget saved copy</button>
     <span class="spacer"></span>
     <button id="leClose">Close</button>
     <button id="leUse" class="on">Use these lyrics</button>
@@ -643,10 +667,17 @@ function restoreTiming(L, sv){
   return L.times.filter(x=>x!=null).length;
 }
 
-function addLyrics(name, txt){
+function addLyrics(name, txt, title){
   let items, lrcTimes=null;
   if(/\.lrc$/i.test(name)){ ({items, lrcTimes}=parseLrc(txt)); }
-  else items = isPhrasing(txt) ? parsePhrasing(txt) : isSuno(txt) ? parseSuno(txt, name) : parsePlain(txt);
+  else if(isPhrasing(txt)) items=parsePhrasing(txt);
+  else if(isSuno(txt)) items=parseSuno(txt, title || name);
+  else {
+    // plain lyrics treat the first line as the title; when a title is given and the text doesn't start with it, add it
+    const first=(txt.split(/\r?\n/).find(l=>l.trim())||"").trim();
+    items=parsePlain(title && first.toLowerCase()!==title.trim().toLowerCase() ? title+"\n\n"+txt : txt);
+  }
+  if(title && !items.some(i=>i.type==="title")) items.unshift({type:"title",html:esc(title)});
   const lines=[], secs=[]; let sec=-1;
   items.forEach(it=>{
     if(it.type==="section"){ secs.push({name:plainText(it.html), first:null, last:null}); sec=secs.length-1; it.sec=sec; }
@@ -655,7 +686,7 @@ function addLyrics(name, txt){
   // a section with no lyric lines (e.g. "[SHORT INSTRUMENTAL]") names the break after the line before it
   let lastLine=-1;
   items.forEach(it=>{ if(it.type==="line") lastLine=it.idx; else if(it.type==="section" && secs[it.sec].first==null && lastLine>=0){ const nm=plainText(it.html).toLowerCase(); lines[lastLine].brkName=nm.charAt(0).toUpperCase()+nm.slice(1); } });
-  const L={items, lines, secs, src:txt, times:new Array(lines.length).fill(null), ends:new Array(lines.length).fill(null)};
+  const L={items, lines, secs, src:txt, srcTitle:title||null, times:new Array(lines.length).fill(null), ends:new Array(lines.length).fill(null)};
   assignParts(L);
   lyrics[name]=L;
   // timing: new store (survives edits) → older per-line-count store → LRC stamps
@@ -1805,31 +1836,62 @@ updateDuetUI();
 // ---------- 📝 lyrics editor ----------
 const PASTED_KEY="phrasecue:pasted";
 function pastedAll(){ return store.get(PASTED_KEY, {}) || {}; }
+let editingName=null;
+function leName(){ const t=$("leTitle").value.trim(), v=$("leVer").value.trim(); return t ? (v ? t+" – "+v : t) : (v || ""); }
 function describeLyrics(txt){
-  if(!txt.trim()) return "Empty: paste or type some lyrics.";
-  const fmtName = isPhrasing(txt) ? "vocal phrasing" : isSuno(txt) ? "Suno-style tags" : "plain lyrics";
-  const tmp={}; const saved=lyrics; lyrics=tmp; try{ addLyrics("__probe__", txt); }finally{ lyrics=saved; }
-  const L=tmp["__probe__"]; store.set(timingKey2("__probe__"), null);
-  return "Detected: "+fmtName+" · "+L.lines.length+" lines · "+L.secs.length+" sections"+(L.parts.length?" · parts: "+L.parts.join(", "):"");
+  const info=$("leInfo");
+  if(!txt.trim()){ info.innerHTML='<span>Empty: paste or type some lyrics.</span>'; return; }
+  const fmtName = isPhrasing(txt) ? "Vocal phrasing" : isSuno(txt) ? "Suno-style tags" : "Plain lyrics";
+  const tmp={}; const saved=lyrics; lyrics=tmp; try{ addLyrics("__probe__", txt, $("leTitle").value.trim()||null); }finally{ lyrics=saved; }
+  const L=tmp["__probe__"];
+  let keep="";
+  if(editingName && lyrics[editingName]){
+    const old=lyrics[editingName], had=old.times.filter(x=>x!=null).length;
+    if(had){ const k=restoreTiming(L,{times:old.times, ends:old.ends, texts:old.lines.map(l=>normLine(l.html))});
+      keep='<span class="keep'+(k<had?' warn':'')+'">Timing kept for '+k+' of '+L.lines.length+' lines</span>'; }
+  }
+  info.innerHTML='<span class="fmt">'+fmtName+'</span><span>'+L.lines.length+' lines · '+L.secs.length+' sections'+(L.parts.length?' · '+L.parts.length+' singers':'')+'</span>'+keep;
 }
 function openLyricsEditor(fresh){
   const L = !fresh && curName ? lyrics[curName] : null;
-  $("leName").value = L ? curName : "";
+  editingName = L ? curName : null;
+  if(L){
+    const all=pastedAll(), pv=all[curName];
+    const m=curName.match(/^(.*?) – (.+)$/);
+    if(pv && pv.title){ $("leTitle").value=pv.title; $("leVer").value = m && m[1]===pv.title ? m[2] : ""; }
+    else if(m){ $("leTitle").value=m[1]; $("leVer").value=m[2]; }
+    else { $("leTitle").value=songTitleOf(L,curName); $("leVer").value=""; }
+  } else { $("leTitle").value=""; $("leVer").value=""; }
   $("leText").value = L ? (L.src||"") : "";
-  $("leInfo").textContent = describeLyrics($("leText").value);
+  describeLyrics($("leText").value);
   $("lyed").classList.add("show");
-  setTimeout(()=>$(L?"leText":"leName").focus(),50);
+  setTimeout(()=>$(L?"leText":"leTitle").focus(),50);
+}
+function insertAtCursor(btn){
+  const ta=$("leText"), v=ta.value, st=ta.selectionStart??v.length, en=ta.selectionEnd??st;
+  let ins, caret;
+  if(btn.dataset.wrap){ const w=btn.dataset.wrap, sel=v.slice(st,en)||"word"; ins=w+sel+w; caret=st+ins.length; }
+  else { const pre=(st>0 && v[st-1]!=="\n") ? "\n" : ""; ins=pre+btn.dataset.ins+"\n"; caret=st+ins.length; }
+  ta.value=v.slice(0,st)+ins+v.slice(en); ta.focus(); ta.setSelectionRange(caret,caret);
+  ta.dispatchEvent(new Event("input"));
 }
 function useEditedLyrics(){
-  const txt=$("leText").value; let name=$("leName").value.trim();
+  const txt=$("leText").value, title=$("leTitle").value.trim()||null;
   if(!txt.trim()){ toast("Paste or type some lyrics first"); return; }
-  if(!name){ name="Pasted lyrics"; }
-  if(/\.lrc$/i.test(name)===false && /\.(txt|md)$/i.test(name)===false && lyrics[name+".txt"]) name=name+".txt";
-  const had = lyrics[name] ? lyrics[name].times.filter(x=>x!=null).length : 0;
-  if(lyrics[name]) snapLyrics(name, "lyrics edit");
-  if(lyrics[name]) saveTimingFor(name);           // make sure the latest timing is stored before re-reading
-  const kept=addLyrics(name, txt);
-  const all=pastedAll(); all[name]={text:txt, updated:Date.now()}; store.set(PASTED_KEY, all);
+  let name = leName();
+  // editing an existing sheet without renaming keeps its name (and so its timing)
+  if(editingName && lyrics[editingName]){
+    const m=editingName.match(/^(.*?) – (.+)$/), unchanged = !name || name===editingName || (!m && title===songTitleOf(lyrics[editingName],editingName) && !$("leVer").value.trim());
+    if(unchanged) name=editingName;
+  }
+  if(!name) name="Pasted lyrics";
+  if(editingName && name!==editingName && lyrics[editingName]){   // renamed: carry the timing over
+    saveTimingFor(editingName); const sv=store.get(timingKey2(editingName),null); if(sv && !store.get(timingKey2(name),null)) store.set(timingKey2(name), sv);
+  }
+  const prev=lyrics[name], had = prev ? prev.times.filter(x=>x!=null).length : 0;
+  if(prev){ snapLyrics(name, "lyrics edit"); saveTimingFor(name); }
+  const kept=addLyrics(name, txt, title);
+  const all=pastedAll(); all[name]={text:txt, title, updated:Date.now()}; store.set(PASTED_KEY, all);
   saveTimingFor(name);
   refreshLyricSelect(name);
   $("lyed").classList.remove("show");
@@ -1840,18 +1902,20 @@ function useEditedLyrics(){
 }
 function restorePasted(){
   const all=pastedAll(); const names=Object.keys(all);
-  names.forEach(n=>{ if(all[n] && typeof all[n].text==="string") addLyrics(n, all[n].text); });
+  names.forEach(n=>{ if(all[n] && typeof all[n].text==="string") addLyrics(n, all[n].text, all[n].title||null); });
   if(names.length) refreshLyricSelect();
 }
 $("btnLyrics").onclick=()=>openLyricsEditor(false);
 $("dropPaste").onclick=e=>{ e.preventDefault(); openLyricsEditor(true); };
 $("dropContinue").onclick=enterLyricsOnly;
-$("leText").addEventListener("input",()=>{ clearTimeout(openLyricsEditor._t); openLyricsEditor._t=setTimeout(()=>{ $("leInfo").textContent=describeLyrics($("leText").value); },250); });
+const leRefresh=()=>{ clearTimeout(openLyricsEditor._t); openLyricsEditor._t=setTimeout(()=>describeLyrics($("leText").value),200); };
+$("leText").addEventListener("input",leRefresh); $("leTitle").addEventListener("input",leRefresh);
+document.querySelectorAll(".le-tags button").forEach(b=>b.onclick=()=>insertAtCursor(b));
 $("leUse").onclick=useEditedLyrics;
 $("leClose").onclick=()=>$("lyed").classList.remove("show");
-$("leNew").onclick=()=>{ $("leName").value=""; $("leText").value=""; $("leInfo").textContent=describeLyrics(""); $("leName").focus(); };
-$("leDownload").onclick=()=>{ const n=($("leName").value.trim()||"lyrics").replace(/[\\/:*?"<>|]+/g,"-"); download(/\.(txt|md|lrc)$/i.test(n)?n:n+".txt", $("leText").value, "text/plain"); };
-$("leDelete").onclick=()=>{ const n=$("leName").value.trim(); const all=pastedAll(); if(all[n]){ delete all[n]; store.set(PASTED_KEY, all); toast("Forgot the saved copy of "+n+" (still open for now)"); } else toast("No saved copy named "+(n||"that")); };
+$("leNew").onclick=()=>{ editingName=null; $("leTitle").value=""; $("leVer").value=""; $("leText").value=""; describeLyrics(""); $("leTitle").focus(); };
+$("leDownload").onclick=()=>{ const n=(leName()||"lyrics").replace(/[\\/:*?"<>|]+/g,"-"); download(/\.(txt|md|lrc)$/i.test(n)?n:n+".txt", $("leText").value, "text/plain"); };
+$("leDelete").onclick=()=>{ const n=editingName||leName(); const all=pastedAll(); if(all[n]){ delete all[n]; store.set(PASTED_KEY, all); toast("Forgot the saved copy of "+n+" (still open for now)"); } else toast("No saved copy named "+(n||"that")); };
 $("lyed").addEventListener("click",e=>{ if(e.target.id==="lyed") $("lyed").classList.remove("show"); });
 restorePasted(); updateDropContinue();
 
