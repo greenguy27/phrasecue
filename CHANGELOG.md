@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.0 (in testing)
+- **Clearer controls:** 🎤 Sing | ⏱ Time and Vocals | Karaoke switches replace the toggle buttons, so the current state is always visible
+- **Tidier top bar:** one row; loaded files, text size, full screen, undo, help and About moved into a **⋯** menu
+- **Undo:** pop-up with Undo (and `Ctrl+Z`) for clearing timing, moving lines, timeline drags, removing break marks and lyrics edits; no more "are you sure?" dialog
+- **Welcome checklist:** live ✓ for Lyrics, Full mix, Instrumental (optional) and Timed, showing exactly what's missing
+
 ## 1.4.0 (2026-10-23)
 - **Lyrics-only mode:** read and step through lyrics before the MP3 exists ("Continue without audio"); playback, timing and video wait for audio
 - **Duet layout:** singer A left, singer B right, both centered (app + videos, switchable); video option to show singer names above every line, on change, or off (names are labels, never timed)

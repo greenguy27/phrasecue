@@ -147,18 +147,25 @@ During an instrumental break, the last line dims and a **♪ Instrumental** bar 
   - The browser asks for microphone access the first time. Recording works from the hosted link in every browser. Opening the file directly works in Chrome and Edge, but Safari may refuse.
   - Chrome asks once to *allow multiple downloads* the second time you download from the page. Click Allow.
 
+## Layout at a glance
+
+- **Top bar:** lyrics menu · timed status · 📂 Load · 📝 Lyrics · **🎤 Sing | ⏱ Time** · **Vocals | Karaoke** · Timing ▾ · 🎬 Video · **⋯** (loaded files, text size, full screen, undo, help, About)
+- **Undo:** clearing timing, moving lines (keys or timeline drag), removing break marks and editing lyrics can all be undone, with **Undo** on the pop-up, `Ctrl`+`Z`, or ⋯ → Undo.
+- **Welcome checklist:** shows what's loaded and what's still missing: Lyrics · Full mix · Instrumental (optional) · Timed.
+
 ## Keyboard shortcuts
 
 | Key | Action |
 |---|---|
 | `Space` | Play / pause (in timing mode: stamp the blue line) |
 | `P` | Play / pause in any mode |
-| `S` | Timing (sync) mode on/off |
-| `V` | Full mix ↔ instrumental |
+| `S` | Switch 🎤 Sing ↔ ⏱ Time |
+| `V` | Vocals ↔ Karaoke |
 | `←` `→` | Seek 5 seconds |
 | `↑` `↓` | Previous / next line |
 | `[` `]` | Move the current line 0.1 s earlier / later |
 | `Shift` + `[` `]` | Move **all** lines 0.1 s earlier / later |
+| `Ctrl`+`Z` | Undo the last timing change or lyrics edit |
 | `Backspace` | Timing mode: undo the last stamp (or break mark) |
 | `Enter` / `Shift`+`Enter` | Mark / remove an instrumental break after the current line |
 | `+` `−` | Text size |

@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#0d0e12">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230d0e12'/%3E%3Cpath d='M14 40h22' stroke='%235f6270' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M14 28h36' stroke='%23f2b84b' stroke-width='6' stroke-linecap='round'/%3E%3Cpath d='M44 36l8 6-8 6' fill='none' stroke='%237fb8ff' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <!--
-  PhraseCue v1.4.0 — a lyric prompter for singers, built around vocal-phrasing notes.
+  PhraseCue v1.5.0 — a lyric prompter for singers, built around vocal-phrasing notes.
   Copyright (c) 2026 Chris Ross / CRBooks.ink — MIT License (see LICENSE).
   https://github.com/greenguy27/phrasecue
 
@@ -102,6 +102,27 @@ button:disabled{opacity:.45;cursor:default}
 .tl canvas{display:block;width:100%;height:100%;cursor:pointer}
 .tltip{position:absolute;bottom:68px;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--line);padding:4px 8px;border-radius:7px;font-size:12px;white-space:nowrap;pointer-events:none;display:none;z-index:6;max-width:70vw;overflow:hidden;text-overflow:ellipsis}
 details.menu{position:relative}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;flex:0 0 auto}
+.seg button{border:0;border-radius:0;background:var(--panel2);padding:6px 11px}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.active{background:var(--accent);color:#1a1405;font-weight:600}
+#segMode button.active[data-v="sync"]{background:var(--target);color:#06121f}
+.seg button:disabled{opacity:.4}
+.menu-files{display:flex;flex-direction:column;gap:4px;padding:2px 2px 6px;border-bottom:1px solid var(--line);margin-bottom:4px}
+.menu-files .chip{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px}
+.menu-row{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--mid)}
+.menu-row span{flex:1}
+#snack{position:fixed;left:50%;bottom:165px;transform:translateX(-50%) translateY(20px);background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:8px 8px 8px 16px;display:flex;align-items:center;gap:14px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:41;box-shadow:0 8px 24px rgba(0,0,0,.45);font-size:14px}
+#snack.show{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
+#snack button{background:none;border:0;color:var(--accent);font-weight:700;padding:6px 10px}
+.checklist{list-style:none;padding:0;margin:8px auto 16px;display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:540px;text-align:left}
+.checklist li{display:flex;gap:10px;align-items:flex-start;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13px;color:var(--mid)}
+.checklist li b{color:var(--fg);display:block;font-size:14px}
+.checklist .ck{flex:0 0 22px;height:22px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;margin-top:1px}
+.checklist li.done{border-color:#2f5a33}
+.checklist li.done .ck{background:#4caf6a;border-color:#4caf6a;color:#08140b}
+.checklist li.opt .ck{border-style:dashed}
+@media (max-width:560px){.checklist{grid-template-columns:1fr}}
 details.menu summary{list-style:none;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 11px;cursor:pointer;white-space:nowrap}
 details.menu summary::-webkit-details-marker{display:none}
 details.menu[open] summary{border-color:var(--mid)}
@@ -164,30 +185,37 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
 <div class="app" id="app">
   <header>
     <span class="brand">🎤 PhraseCue</span>
-    <span class="chip" id="chipV">Full mix: —</span>
-    <span class="chip" id="chipI">Instrumental: —</span>
-    <select id="lyricSel" title="Lyrics file"></select>
+    <select id="lyricSel" title="Lyrics"></select>
     <span class="chip" id="chipT">untimed</span>
     <span class="spacer"></span>
-    <button id="btnLoad" title="Load files">📂 Load</button>
-    <button id="btnTrack" title="V">🎵 Instrumental</button>
-    <button id="btnSync" class="sync" title="S">⏱ Sync mode</button>
+    <button id="btnLoad" title="Load audio, lyrics or timing files">📂 Load</button>
+    <button id="btnLyrics" title="Paste, type or edit lyrics">📝 Lyrics</button>
+    <div class="seg" id="segMode" role="group" aria-label="Mode" title="Sing along, or time the lyrics (S)">
+      <button data-v="sing">🎤 Sing</button><button data-v="sync">⏱ Time</button>
+    </div>
+    <div class="seg" id="segTrack" role="group" aria-label="Track" title="Hear the full mix or the karaoke track (V)">
+      <button data-v="vocal">Vocals</button><button data-v="inst">Karaoke</button>
+    </div>
     <details class="menu" id="timingMenu"><summary>Timing ▾</summary>
       <div class="menu-items">
         <button id="btnSave" title="Download .timing.json">💾 Save timing file</button>
         <button id="btnLrc" title="Export .lrc">📄 Export LRC</button>
-        <button id="btnClear" title="Erase all timing for this lyrics file">🗑 Clear timing</button>
+        <button id="btnClear" title="Erase all timing for this lyrics file (you can undo)">🗑 Clear timing</button>
         <button id="btnAutoBrk" title="Show long gaps between lines as instrumental breaks, even where you haven't marked one with Enter"></button>
         <button id="btnDuet" title="Duets: singer A on the left, singer B on the right, both singers centered"></button>
       </div>
     </details>
-    <button id="btnLyrics" title="Paste, type or edit lyrics">📝 Lyrics</button>
     <button id="btnVideo" title="Export a lyric or karaoke video">🎬 Video</button>
-    <button id="btnFsDown" title="-">A−</button>
-    <button id="btnFsUp" title="+">A+</button>
-    <button id="btnFull" title="F">⛶</button>
-    <button id="btnHelp" title="Help (?)">?</button>
-    <button id="btnAbout" title="About PhraseCue">About</button>
+    <details class="menu" id="moreMenu"><summary title="More">⋯</summary>
+      <div class="menu-items">
+        <div class="menu-files"><span class="chip" id="chipV">Full mix: —</span><span class="chip" id="chipI">Instrumental: —</span></div>
+        <div class="menu-row"><span>Text size</span><button id="btnFsDown" title="Smaller (−)">A−</button><button id="btnFsUp" title="Larger (+)">A+</button></div>
+        <button id="btnFull" title="F">⛶ Full screen</button>
+        <button id="btnUndo" title="Ctrl+Z">↶ Undo last timing change</button>
+        <button id="btnHelp" title="?">❔ Help &amp; shortcuts</button>
+        <button id="btnAbout">ℹ About PhraseCue</button>
+      </div>
+    </details>
   </header>
 
   <div class="syncbar" id="syncbar">SYNC: tap <kbd>Space</kbd> the moment the singer <u>starts</u> the BLUE line (first tap just starts the song) · <kbd>Enter</kbd> when the singing stops for an instrumental · <kbd>Backspace</kbd> undo · click a line to redo from there</div>
@@ -245,11 +273,7 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
       <div><h1>PhraseCue</h1><p class="by">by <a href="https://github.com/greenguy27" target="_blank" rel="noopener"><b>greenguy27</b></a> · <a href="https://crbooks.ink" target="_blank" rel="noopener">CRBooks.ink</a> · <span id="dropVer"></span></p></div>
     </div>
     <p class="tag">A free lyric prompter for singers. Time your lyrics once, then sing along with phrasing cues, practice loops, recording and lyric-video export.</p>
-    <ol class="steps">
-      <li><b>Load</b> your song and lyrics</li>
-      <li><b>Tap</b> once through to time it</li>
-      <li><b>Sing</b>, practice or export a video</li>
-    </ol>
+    <ul class="checklist" id="checklist"></ul>
     <div class="dropzone">
       <h2>Drop your song files here</h2>
       <p>Drag in everything at once: the <b>full mix</b>, the <b>instrumental</b> (PhraseCue asks which is which if the names don't say) and your <b>lyrics .txt</b>. Add a saved <b>.timing.json</b> or <b>.lrc</b> if you have one.</p>
@@ -271,12 +295,13 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
   <table>
     <tr><td><kbd>Space</kbd></td><td>Play / pause (sync mode: stamp the outlined line)</td></tr>
     <tr><td><kbd>P</kbd></td><td>Play / pause (any mode)</td></tr>
-    <tr><td><kbd>S</kbd></td><td>Toggle sync mode</td></tr>
-    <tr><td><kbd>V</kbd></td><td>Switch full mix ↔ instrumental, without stopping</td></tr>
+    <tr><td><kbd>S</kbd></td><td>Switch between 🎤 Sing and ⏱ Time</td></tr>
+    <tr><td><kbd>V</kbd></td><td>Switch Vocals ↔ Karaoke, without stopping</td></tr>
     <tr><td><kbd>←</kbd> <kbd>→</kbd></td><td>Seek 5 s</td></tr>
     <tr><td><kbd>↑</kbd> <kbd>↓</kbd></td><td>Previous / next line (jumps to its time, or steps manually if untimed)</td></tr>
     <tr><td><kbd>[</kbd> <kbd>]</kbd></td><td>Nudge the current line 0.1 s earlier/later</td></tr>
     <tr><td><kbd>Shift</kbd>+<kbd>[</kbd> <kbd>]</kbd></td><td>Nudge <i>all</i> lines 0.1 s earlier/later</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>Z</kbd></td><td>Undo the last timing change, cleared timing or lyrics edit (also <b>Undo</b> on the pop-up, or ⋯ → Undo)</td></tr>
     <tr><td><kbd>Backspace</kbd></td><td>Sync mode: undo the last stamp (or break mark)</td></tr>
     <tr><td><kbd>Enter</kbd></td><td>Mark an instrumental break: the singing stops here, after the last line. <kbd>Shift</kbd>+<kbd>Enter</kbd> removes it</td></tr>
     <tr><td><kbd>+</kbd> <kbd>−</kbd></td><td>Text size</td></tr>
@@ -356,12 +381,13 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
 </div></div>
 
 <div class="toast" id="toast"></div>
+<div id="snack" role="status"><span id="snackMsg"></span><button id="snackUndo">Undo</button></div>
 <input type="file" id="fileIn" multiple accept=".mp3,.m4a,.wav,.ogg,.flac,.aac,.txt,.md,.lrc,.json" hidden>
 
 <script>
 "use strict";
 const $ = id => document.getElementById(id);
-const APP = {name:"PhraseCue", version:"1.4.0", repo:"https://github.com/greenguy27/phrasecue", site:"https://crbooks.ink"};
+const APP = {name:"PhraseCue", version:"1.5.0", repo:"https://github.com/greenguy27/phrasecue", site:"https://crbooks.ink"};
 const store = {
   get(k, d){ try{ const v = localStorage.getItem(k); return v==null ? d : JSON.parse(v); }catch(e){ return d; } },
   set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
@@ -395,6 +421,21 @@ const md = s => esc(s).replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/
 const plainText = html => { const d=document.createElement("div"); d.innerHTML=html; return d.textContent.trim(); };
 const fmt = t => { if(!isFinite(t)||t<0) t=0; const m=Math.floor(t/60), s=t-m*60; return m+":"+(s<10?"0":"")+s.toFixed(1); };
 const fmtShort = t => { if(!isFinite(t)) t=0; const m=Math.floor(t/60), s=Math.floor(t%60); return m+":"+(s<10?"0":"")+s; };
+// ---- undo for timing and lyric edits (snackbar with an Undo button, or Ctrl+Z) ----
+const undoStack=[];
+function snapTiming(label){ if(!curName) return; const L=lyrics[curName]; undoStack.push({name:curName, times:L.times.slice(), ends:L.ends.slice(), label}); if(undoStack.length>30) undoStack.shift(); }
+function snapLyrics(name,label){ const L=lyrics[name]; if(!L) return; undoStack.push({name, src:L.src, times:L.times.slice(), ends:L.ends.slice(), label, text:true}); if(undoStack.length>30) undoStack.shift(); }
+function snack(msg){ const s=$("snack"); $("snackMsg").textContent=msg; s.classList.add("show"); clearTimeout(snack._h); snack._h=setTimeout(()=>s.classList.remove("show"),7000); }
+function undoLast(){
+  const u=undoStack.pop(); $("snack").classList.remove("show");
+  if(!u){ toast("Nothing to undo"); return; }
+  if(u.text){ addLyrics(u.name,u.src); const all=pastedAll(); if(all[u.name]){ all[u.name]={text:u.src,updated:Date.now()}; store.set(PASTED_KEY,all); } }
+  const L=lyrics[u.name]; if(!L) return;
+  if(L.times.length===u.times.length){ L.times=u.times; L.ends=u.ends; }
+  saveTimingFor(u.name);
+  if(u.text || u.name!==curName) refreshLyricSelect(u.name); else { updateTsLabels(); updateTimedChip(); }
+  syncIdx=firstUntimed(); lastCur=-2; toast("Undone: "+u.label);
+}
 function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toast._h); toast._h=setTimeout(()=>t.classList.remove("show"),2200); }
 const master = () => (track==="inst" ? (hasI?aI:aV) : (hasV?aV:aI));
 const now = () => master().currentTime || 0;
@@ -525,7 +566,19 @@ function assignParts(L){
 let duetSide = store.get("phrasecue:duet", true);
 let lyricsOnly = false;                       // user chose to read lyrics before the MP3 exists
 const noAudio = () => !hasV && !hasI;
-function updateDropContinue(){ const b=$("dropContinue"); if(b) b.style.display = (noAudio() && Object.keys(lyrics).length) ? "" : "none"; }
+function updateChecklist(){
+  const ul=$("checklist"); if(!ul) return;
+  const L=curName && lyrics[curName], n=L ? L.times.filter(x=>x!=null).length : 0;
+  const items=[
+    {ok:!!Object.keys(lyrics).length, t:"Lyrics", d: curName ? curName : "Load a .txt or 📝 paste them"},
+    {ok:hasV, t:"Full mix", d: hasV ? fileV.name : "The song with vocals (MP3)"},
+    {ok:hasI, opt:true, t:"Instrumental (optional)", d: hasI ? fileI.name : "Karaoke version, for singing and Snap"},
+    {ok: !!L && L.lines.length>0 && n===L.lines.length, t:"Timed", d: !L ? "Press ⏱ Time and tap Space at each line" : n===0 ? "Press ⏱ Time and tap Space at each line" : n<L.lines.length ? n+" of "+L.lines.length+" lines timed" : "All "+n+" lines timed"}
+  ];
+  ul.innerHTML=items.map(i=>'<li class="'+(i.ok?"done":"")+(i.opt?" opt":"")+'"><span class="ck">'+(i.ok?"✓":"")+'</span><span><b>'+esc(i.t)+'</b>'+esc(i.d)+'</span></li>').join("");
+}
+function updateDropContinue(){
+  updateChecklist(); const b=$("dropContinue"); if(b) b.style.display = (noAudio() && Object.keys(lyrics).length) ? "" : "none"; }
 function enterLyricsOnly(){ lyricsOnly=true; $("drop").classList.add("hidden"); toast("Lyrics only: use ↑ / ↓ or click a line to step through. Load the MP3 when it's ready"); }
 function sideOf(L,i,enabled){ const p=L && L.lines[i] && L.lines[i].part; return enabled && p && L.sides && L.sides[p] || "center"; }
 function partColor(L,i){ const p=L && L.lines[i] && L.lines[i].part; return p && L.partColor && L.partColor[p] || null; }
@@ -647,6 +700,7 @@ async function loadFiles(fileList){
   if(audio.length){ clearLoop(); analyze(); }
   if((hasV||hasI) && Object.keys(lyrics).length) $("drop").classList.add("hidden");
   if(applied) toast("Timing loaded for "+applied);
+  updateDropContinue();
 }
 
 function refreshLyricSelect(pick){
@@ -827,9 +881,12 @@ function setTrack(tr){
   applyVolumes(); updateTrackUI();
 }
 function updateTrackUI(){
-  $("btnTrack").textContent = track==="inst" ? "🎵 Instrumental" : "🎤 Full mix";
-  $("btnTrack").classList.toggle("on", track==="inst");
+  document.querySelectorAll("#segTrack button").forEach(b=>{
+    b.classList.toggle("active", b.dataset.v===track && (hasV||hasI));
+    b.disabled = b.dataset.v==="vocal" ? !hasV : !hasI;
+  });
 }
+function updateModeUI(){ document.querySelectorAll("#segMode button").forEach(b=>b.classList.toggle("active", b.dataset.v===mode)); }
 [aV,aI].forEach(a=>{
   a.addEventListener("ended",()=>{ if(rec.active) stopRec(); else pause(); });
   a.addEventListener("loadedmetadata",()=>{ $("seek").max=dur()||1; });
@@ -863,7 +920,7 @@ function setMode(m){
   if(m==="sync" && noAudio()){ toast("Load the song's MP3 first. Timing follows the audio"); return; }
   mode=m;
   document.body.classList.toggle("sync-on", m==="sync");
-  $("btnSync").classList.toggle("on", m==="sync");
+  updateModeUI();
   if(m==="sync"){
     trackBeforeSync=track; if(hasV) setTrack("vocal");
     syncIdx=firstUntimed();
@@ -910,13 +967,13 @@ function undoStamp(){
   saveLocal(); updateTsLabels(); updateTimedChip(); lastCur=-2;
 }
 function saveTimingFor(name){ const L=lyrics[name]; if(L) store.set(timingKey2(name), {times:L.times, ends:L.ends, texts:L.lines.map(l=>normLine(l.html))}); }
-function saveLocal(){ if(curName) saveTimingFor(curName); }
+function saveLocal(){ if(curName) saveTimingFor(curName); updateChecklist(); }
 // Enter: the singing stops here (an instrumental break starts) after the last stamped / current line
 function markBreak(remove){
   const L=lyrics[curName]; if(!L) return;
   const i = mode==="sync" ? syncIdx-1 : currentIndex(now()+lead);
   if(i<0 || L.times[i]==null){ toast("Stamp a line first"); return; }
-  if(remove){ if(L.ends[i]!=null){ L.ends[i]=null; saveLocal(); lastCur=-2; toast("Break mark after line "+(i+1)+" removed"); } return; }
+  if(remove){ if(L.ends[i]!=null){ snapTiming("remove break mark"); L.ends[i]=null; saveLocal(); lastCur=-2; snack("Break mark after line "+(i+1)+" removed"); } return; }
   const t=+now().toFixed(2), n=nextTimed(i);
   if(t<=L.times[i]+0.3 || (n>=0 && mode!=="sync" && t>=L.times[n])){ toast("Mark the break after line "+(i+1)+" starts, before the next line"); return; }
   L.ends[i]=t; if(mode==="sync") lastSyncAction="break";
@@ -946,6 +1003,7 @@ function stepLine(d){
 }
 function nudge(delta, all){
   const L=lyrics[curName]; if(!L) return;
+  snapTiming(all ? "move all lines" : "move line");
   if(all){ L.times=L.times.map(x=>x==null?null:Math.max(0,+(x+delta).toFixed(2))); L.ends=L.ends.map(x=>x==null?null:Math.max(0,+(x+delta).toFixed(2))); toast(`All lines ${delta>0?"+":""}${delta.toFixed(1)}s`); }
   else{
     const i = mode==="sync" ? syncIdx-1 : currentIndex(now()+lead);
@@ -1208,7 +1266,7 @@ function lineTip(i){ const L=lyrics[curName]; return "Line "+(i+1)+" · "+fmt(L.
     if(!dur()) return;
     const {w}=tlDims(), x=e.offsetX, hm=hitMarker(x,w);
     c.setPointerCapture(e.pointerId);
-    tl.drag = hm ? {type: hm.kind==="end"?"end":"marker", i:hm.i, x0:x, moved:false} : {type:"bg", x0:x, v0:span().slice(), moved:false};
+    tl.drag = hm ? {type: hm.kind==="end"?"end":"marker", i:hm.i, x0:x, moved:false, before:{name:curName, times:lyrics[curName].times.slice(), ends:lyrics[curName].ends.slice()}} : {type:"bg", x0:x, v0:span().slice(), moved:false};
   });
   c.addEventListener("pointermove",e=>{
     const {w}=tlDims(), x=e.offsetX, D=tl.drag;
@@ -1230,10 +1288,10 @@ function lineTip(i){ const L=lyrics[curName]; return "Line "+(i+1)+" · "+fmt(L.
     const D=tl.drag; tl.drag=null; if(!D) return;
     const {w}=tlDims(), x=e.offsetX;
     if(D.type==="marker"){
-      if(D.moved){ saveLocal(); updateTsLabels(); updateTimedChip(); lastCur=-2; }
+      if(D.moved){ undoStack.push({...D.before, label:"move line "+(D.i+1)}); saveLocal(); updateTsLabels(); updateTimedChip(); lastCur=-2; snack("Line "+(D.i+1)+" moved to "+fmt(lyrics[curName].times[D.i])); }
       else gotoLine(D.i);
     } else if(D.type==="end"){
-      if(D.moved){ saveLocal(); lastCur=-2; } else seek(Math.max(0,lyrics[curName].ends[D.i]-1.5));
+      if(D.moved){ undoStack.push({...D.before, label:"move break"}); saveLocal(); lastCur=-2; snack("Break moved"); } else seek(Math.max(0,lyrics[curName].ends[D.i]-1.5));
     } else if(!D.moved){ seek(x2t(x,w)); }
   };
   c.addEventListener("pointerup",end);
@@ -1615,20 +1673,23 @@ $("lyricSel").onchange=e=>selectLyrics(e.target.value);
 $("btnPlay").onclick=togglePlay;
 $("btnBack").onclick=()=>seek(now()-5);
 $("btnFwd").onclick=()=>seek(now()+5);
-$("btnTrack").onclick=()=>setTrack(track==="inst"?"vocal":"inst");
-$("btnSync").onclick=()=>setMode(mode==="sync"?"sing":"sync");
+document.querySelectorAll("#segTrack button").forEach(b=>b.onclick=()=>{ if(b.dataset.v!==track) setTrack(b.dataset.v); });
+document.querySelectorAll("#segMode button").forEach(b=>b.onclick=()=>{ if(b.dataset.v!==mode) setMode(b.dataset.v); });
+updateModeUI(); updateTrackUI();
 $("btnSave").onclick=()=>{ saveTiming(); $("timingMenu").open=false; };
 $("btnLrc").onclick=()=>{ exportLrc(); $("timingMenu").open=false; };
 $("btnClear").onclick=()=>{
   $("timingMenu").open=false;
   if(!curName) return;
-  if(!confirm("Erase all timing for "+curName+"?\n(Any .timing.json files you saved are not touched.)")) return;
+  snapTiming("clear timing");
   const L=lyrics[curName]; L.times=L.times.map(()=>null); L.ends=L.ends.map(()=>null); saveLocal(); updateTsLabels(); updateTimedChip();
-  syncIdx=0; manualIdx=-1; seek(0); lastCur=-2; toast("Timing cleared");
+  syncIdx=0; manualIdx=-1; seek(0); lastCur=-2; snack("Timing cleared for "+curName);
 };
 $("btnFsUp").onclick=()=>{ fs=Math.min(120,fs+4); applyFs(); };
 $("btnFsDown").onclick=()=>{ fs=Math.max(18,fs-4); applyFs(); };
 $("btnFull").onclick=()=>{ document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen?.(); };
+$("snackUndo").onclick=undoLast;
+$("btnUndo").onclick=undoLast;
 $("btnHelp").onclick=()=>$("help").classList.add("show");
 $("btnHelpClose").onclick=()=>$("help").classList.remove("show");
 $("btnAbout").onclick=()=>$("about").classList.add("show");
@@ -1684,6 +1745,7 @@ function useEditedLyrics(){
   if(!name){ name="Pasted lyrics"; }
   if(/\.lrc$/i.test(name)===false && /\.(txt|md)$/i.test(name)===false && lyrics[name+".txt"]) name=name+".txt";
   const had = lyrics[name] ? lyrics[name].times.filter(x=>x!=null).length : 0;
+  if(lyrics[name]) snapLyrics(name, "lyrics edit");
   if(lyrics[name]) saveTimingFor(name);           // make sure the latest timing is stored before re-reading
   const kept=addLyrics(name, txt);
   const all=pastedAll(); all[name]={text:txt, updated:Date.now()}; store.set(PASTED_KEY, all);
@@ -1691,7 +1753,7 @@ function useEditedLyrics(){
   refreshLyricSelect(name);
   $("lyed").classList.remove("show");
   const L=lyrics[name];
-  toast(had ? "Updated "+name+" · kept timing for "+kept+" of "+L.lines.length+" lines" : "Using "+name+" · "+L.lines.length+" lines");
+  if(had) snack("Updated "+name+" · kept timing for "+kept+" of "+L.lines.length+" lines"); else toast("Using "+name+" · "+L.lines.length+" lines");
   $("drop").classList.add("hidden"); if(noAudio()) lyricsOnly=true;
   updateDropContinue();
 }
@@ -1727,6 +1789,7 @@ $("lat").oninput=e=>{ micLatency=+e.target.value; store.set("phrasecue:lat",micL
 syncLatUI(); updateSnapUI(); updateLoopUI(); renderTakes();
 document.addEventListener("click",e=>{
   const m=$("timingMenu"); if(m.open && !m.contains(e.target)) m.open=false;
+  const mm=$("moreMenu"); if(mm.open && (!mm.contains(e.target) || ["btnFull","btnHelp","btnAbout","btnUndo"].includes(e.target.id))) mm.open=false;
   const tk=$("takes"); if(tk.classList.contains("show") && !tk.contains(e.target) && e.target.id!=="btnTakes" && !e.target.closest("#takes")) tk.classList.remove("show");
 });
 window.addEventListener("resize",()=>drawTL());
@@ -1738,6 +1801,7 @@ document.addEventListener("keydown",e=>{
   if($("pickInst").classList.contains("show")) return;
   if($("lyed").classList.contains("show")){ if(e.key==="Escape") $("lyed").classList.remove("show"); else if(e.key==="Enter" && (e.ctrlKey||e.metaKey)){ e.preventDefault(); useEditedLyrics(); } return; }
   if(e.target.tagName==="SELECT" || e.target.tagName==="TEXTAREA" || (e.target.tagName==="INPUT" && e.target.type!=="range" && e.target.type!=="checkbox")) return;
+  if((e.ctrlKey||e.metaKey) && (e.key==="z"||e.key==="Z") && !e.shiftKey){ e.preventDefault(); undoLast(); return; }
   if(e.ctrlKey||e.metaKey||e.altKey) return;
   const k=e.key;
   if($("video").classList.contains("show")){ if(k==="Escape" && !vx.active) $("video").classList.remove("show"); return; }
